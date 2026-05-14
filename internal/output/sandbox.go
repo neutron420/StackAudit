@@ -81,12 +81,18 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		switch msg.Type {
+		case tea.KeyUp:
+			if m.textInput.Value() == "" {
+				m.viewport.LineUp(1)
+				return m, nil
+			}
+		case tea.KeyDown:
+			if m.textInput.Value() == "" {
+				m.viewport.LineDown(1)
+				return m, nil
+			}
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
-		case tea.KeyUp:
-			// Regular up (for input cursor) handled by m.textInput.Update
-		case tea.KeyDown:
-			// Regular down handled by m.textInput.Update
 		case tea.KeyPgUp:
 			m.viewport.ViewUp()
 			return m, nil
@@ -122,13 +128,13 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 
 		if !m.ready {
-			m.viewport = viewport.New(msg.Width, msg.Height-18)
-			m.viewport.YPosition = 15
+			m.viewport = viewport.New(msg.Width, msg.Height-12)
+			m.viewport.YPosition = 8
 			m.viewport.SetContent("Welcome to the STACK Sandbox. Type a command to begin.")
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - 18
+			m.viewport.Height = msg.Height - 12
 		}
 	}
 
