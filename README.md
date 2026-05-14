@@ -24,14 +24,14 @@ The MVP is complete and production-ready for local scanning. Core modules, rules
 - Ignore file support (.devdoctorignore)
 - Exit codes by severity for CI gating
 - SARIF output for security tooling
+- Configurable rule severities and embedded/custom rule packs
+- Baseline snapshots to suppress known findings
+- Per-module timeout budgets
 
 ## What is still left (nice-to-have roadmap)
 
 These are optional enhancements. The current release already meets the product vision for local-first scanning.
 
-- Configurable rule severities and custom rule packs
-- Baseline snapshots to suppress known findings
-- Per-module timeouts and budgets
 - Kubernetes, Redis, PostgreSQL scanners
 - Plugin system for custom scanners
 - Git hooks integration (pre-commit, pre-push)
@@ -74,6 +74,7 @@ Common flags:
 ```bash
 devdoctor scan --path .
 devdoctor scan --rules ./configs/sample_rules.yaml
+devdoctor scan --rule-pack strict
 devdoctor scan --output table
 devdoctor scan --no-tui
 ```
@@ -117,13 +118,19 @@ Exit codes:
 
 ### Rules engine
 
-Rules are defined in YAML. Example:
+Rules are defined in YAML. Use `severity` to tune any finding by rule ID. Built-in severities are `critical`, `warning`, `info`, and `success`.
 
 ```yaml
+packs:
+  - strict
+
 rules:
   - env: JWT_SECRET
     required: true
+    severity: critical
 
+  - id: docker_latest_tag
+    severity: info
   - docker:
       latest_tag: false
 
@@ -136,6 +143,40 @@ Use the rule file:
 ```bash
 devdoctor scan --rules ./configs/sample_rules.yaml
 ```
+
+Rule packs can be selected from the CLI or composed inside a rules file:
+
+```bash
+devdoctor scan --rule-pack relaxed
+devdoctor scan --rule-pack strict --rule-pack ./team-rules.yaml
+```
+
+Embedded packs:
+
+- `relaxed`: lowers noisy findings for local development
+- `strict`: raises production-sensitive findings
+
+### Baseline snapshots
+
+Create a baseline to suppress known findings from future scans:
+
+```bash
+devdoctor scan --update-baseline --baseline .devdoctor.baseline.json
+devdoctor scan --baseline .devdoctor.baseline.json
+```
+
+Baseline filtering happens before summaries, scores, and exit-code checks, so CI only fails on new findings.
+
+### Module timeouts
+
+Set a single budget for every module, or tune individual modules by name:
+
+```bash
+devdoctor scan --module-timeout 2s
+devdoctor scan --module-timeout env=500ms,secrets=5s,docker=2s,ci=2s
+```
+
+When a module exceeds its budget, DevDoctor reports a `module_timeout` warning for that module and keeps the rest of the scan moving.
 
 ## Fix mode
 

@@ -76,8 +76,7 @@ func Filter(report scanner.Report, snapshot Snapshot, root string) scanner.Repor
 	}
 
 	report.Findings = filtered
-	report.Summary = scanner.Summarize(filtered)
-	return report
+	return scanner.Rebuild(report)
 }
 
 func entriesFromReport(report scanner.Report, root string) []Entry {

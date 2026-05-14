@@ -146,9 +146,14 @@ func applyConfig(set *RuleSet, parsed config) error {
 			if id == "" {
 				id = defaultRuleID(rule)
 			}
-			if id != "" {
-				set.SeverityOverrides[strings.ToLower(id)] = strings.ToLower(strings.TrimSpace(rule.Severity))
+			if id == "" {
+				return fmt.Errorf("severity override missing rule id")
 			}
+			severity := strings.ToLower(strings.TrimSpace(rule.Severity))
+			if !validSeverity(severity) {
+				return fmt.Errorf("invalid severity %q for rule %s", rule.Severity, id)
+			}
+			set.SeverityOverrides[strings.ToLower(id)] = severity
 		}
 	}
 
@@ -166,6 +171,15 @@ func defaultRuleID(rule rule) string {
 		return "env_localhost"
 	}
 	return ""
+}
+
+func validSeverity(value string) bool {
+	switch value {
+	case "critical", "warning", "info", "success":
+		return true
+	default:
+		return false
+	}
 }
 
 func isPathLike(value string) bool {

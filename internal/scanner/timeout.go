@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"devdoctor/internal/rules"
@@ -39,4 +40,14 @@ func runModule(ctx context.Context, mod Module, root string, ruleSet rules.RuleS
 	case <-modCtx.Done():
 		return nil, modCtx.Err(), true
 	}
+}
+
+func moduleTimeout(name string, opts TimeoutOptions) time.Duration {
+	normalized := strings.ToLower(strings.TrimSpace(name))
+	if opts.Modules != nil {
+		if timeout, ok := opts.Modules[normalized]; ok {
+			return timeout
+		}
+	}
+	return opts.Default
 }

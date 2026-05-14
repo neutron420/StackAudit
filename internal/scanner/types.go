@@ -34,6 +34,11 @@ type Meta struct {
 	Duration time.Duration `json:"duration"`
 }
 
+type TimeoutOptions struct {
+	Default time.Duration
+	Modules map[string]time.Duration
+}
+
 type Report struct {
 	Findings []Finding `json:"findings"`
 	Summary  Summary   `json:"summary"`

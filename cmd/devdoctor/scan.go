@@ -33,6 +33,10 @@ func runScan(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	options, err := scanOptions()
+	if err != nil {
+		return err
+	}
 
 	runner := func() (scanner.Report, error) {
 		modules := []scanner.Module{
@@ -41,7 +45,7 @@ func runScan(ctx context.Context) error {
 			docker.NewScanner(),
 			cicd.NewScanner(),
 		}
-		return scanner.Run(ctx, cfg.RootPath, ruleSet, modules, scanner.Options{ModuleTimeout: cfg.ModuleTimeout})
+		return scanner.Run(ctx, cfg.RootPath, ruleSet, modules, options)
 	}
 
 	var report scanner.Report

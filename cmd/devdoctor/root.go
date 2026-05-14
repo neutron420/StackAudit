@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"devdoctor/internal/output"
 	"devdoctor/internal/rules"
@@ -23,7 +22,7 @@ type appConfig struct {
 	MinSeverity    string
 	BaselinePath   string
 	UpdateBaseline bool
-	ModuleTimeout  time.Duration
+	ModuleTimeouts []string
 }
 
 var cfg appConfig
@@ -55,7 +54,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfg.MinSeverity, "min-severity", "warning", "Minimum severity for non-zero exit code: critical|warning|info")
 	rootCmd.PersistentFlags().StringVar(&cfg.BaselinePath, "baseline", ".devdoctor.baseline.json", "Baseline file path")
 	rootCmd.PersistentFlags().BoolVar(&cfg.UpdateBaseline, "update-baseline", false, "Write a baseline file from the current scan")
-	rootCmd.PersistentFlags().DurationVar(&cfg.ModuleTimeout, "module-timeout", 0, "Per-module timeout (e.g. 2s, 500ms)")
+	rootCmd.PersistentFlags().StringSliceVar(&cfg.ModuleTimeouts, "module-timeout", nil, "Module timeout budget: duration for all modules or module=duration (e.g. 2s, env=500ms,secrets=5s)")
 
 	rootCmd.AddCommand(scanCmd)
 	rootCmd.AddCommand(envCmd)

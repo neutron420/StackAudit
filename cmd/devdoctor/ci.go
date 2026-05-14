@@ -30,9 +30,13 @@ func runCIScan(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	options, err := scanOptions()
+	if err != nil {
+		return err
+	}
 
 	modules := []scanner.Module{cicd.NewScanner()}
-	report, err := scanner.Run(ctx, cfg.RootPath, ruleSet, modules, scanner.Options{ModuleTimeout: cfg.ModuleTimeout})
+	report, err := scanner.Run(ctx, cfg.RootPath, ruleSet, modules, options)
 	if err != nil {
 		return err
 	}

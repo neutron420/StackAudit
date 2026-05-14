@@ -16,7 +16,7 @@ type Module interface {
 }
 
 type Options struct {
-	ModuleTimeout time.Duration
+	Timeouts TimeoutOptions
 }
 
 func Run(ctx context.Context, root string, ruleSet rules.RuleSet, modules []Module, opts Options) (Report, error) {
@@ -34,14 +34,19 @@ func Run(ctx context.Context, root string, ruleSet rules.RuleSet, modules []Modu
 		mod := module
 		go func() {
 			defer wg.Done()
-			results, err, timedOut := runModule(ctx, mod, root, ruleSet, opts.ModuleTimeout)
+			timeout := moduleTimeout(mod.Name(), opts.Timeouts)
+			results, err, timedOut := runModule(ctx, mod, root, ruleSet, timeout)
 			mu.Lock()
 			defer mu.Unlock()
 			if timedOut {
+				description := "Module exceeded its time budget"
+				if timeout > 0 {
+					description = fmt.Sprintf("Module exceeded the %s budget", timeout)
+				}
 				findings = append(findings, Finding{
 					Severity:    SeverityWarning,
 					Title:       fmt.Sprintf("%s scan timed out", mod.Name()),
-					Description: fmt.Sprintf("Module exceeded the %s budget", opts.ModuleTimeout),
+					Description: description,
 					Category:    mod.Name(),
 					RuleID:      "module_timeout",
 				})

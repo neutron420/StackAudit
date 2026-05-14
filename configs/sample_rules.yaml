@@ -1,7 +1,13 @@
+packs:
+  - strict
+
 rules:
   - env: JWT_SECRET
     required: true
+    severity: critical
 
+  - id: docker_latest_tag
+    severity: warning
   - docker:
       latest_tag: false
 
