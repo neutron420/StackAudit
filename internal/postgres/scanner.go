@@ -211,7 +211,7 @@ func environmentMap(value interface{}) map[string]string {
 func isWeakPassword(value string) bool {
 	trimmed := strings.Trim(value, "\"'")
 	lower := strings.ToLower(trimmed)
-	return lower == "postgres" || lower == "password" || lower == "changeme" || lower == "example" || strings.HasPrefix(trimmed, "$")
+	return lower == "postgres" || lower == "password" || lower == "changeme" || lower == "example"
 }
 
 func activeLines(content string) []string {

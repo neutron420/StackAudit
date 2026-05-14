@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"devdoctor/internal/rules"
@@ -160,12 +159,12 @@ func scanCompose(path string, data []byte) []scanner.Finding {
 	return findings
 }
 
-var redisURLPattern = regexp.MustCompile(`(?i)REDIS_URL\s*=\s*redis://([^@\s]+)$`)
-
 func scanEnv(path, content string) []scanner.Finding {
 	findings := []scanner.Finding{}
 	for _, line := range strings.Split(content, "\n") {
-		if redisURLPattern.MatchString(strings.TrimSpace(line)) {
+		trimmed := strings.TrimSpace(line)
+		upper := strings.ToUpper(trimmed)
+		if strings.HasPrefix(upper, "REDIS_URL=") && strings.Contains(strings.ToLower(trimmed), "redis://") && !strings.Contains(trimmed, "@") {
 			findings = append(findings, scanner.Finding{
 				Severity:    scanner.SeverityWarning,
 				Title:       "Redis URL does not include credentials",

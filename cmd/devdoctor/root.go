@@ -31,7 +31,7 @@ var cfg appConfig
 var rootCmd = &cobra.Command{
 	Use:   "devdoctor",
 	Short: "DevDoctor scans backend projects for production health issues",
-	Long:  "DevDoctor is a local-first backend health scanner for environment, secrets, Docker, and CI/CD issues.",
+	Long:  "DevDoctor is a local-first backend health scanner for environment, secrets, Docker, CI/CD, Kubernetes, Redis, PostgreSQL, and custom plugin checks.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},

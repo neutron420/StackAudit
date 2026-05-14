@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"devdoctor/internal/rules"
@@ -253,13 +252,4 @@ func defaultSkipDirs() map[string]bool {
 		"build":        true,
 		".next":        true,
 	}
-}
-
-func likelyKubernetesPath(path string) bool {
-	clean := filepath.ToSlash(strings.ToLower(path))
-	return strings.Contains(clean, "/k8s/") ||
-		strings.Contains(clean, "/kubernetes/") ||
-		strings.Contains(clean, "/manifests/") ||
-		strings.Contains(clean, "deployment") ||
-		strings.Contains(clean, "service")
 }

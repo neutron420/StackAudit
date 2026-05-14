@@ -125,6 +125,12 @@ func resolvePluginPaths(root string, values []string) ([]string, error) {
 			if item == "" {
 				continue
 			}
+			if !filepath.IsAbs(item) {
+				rootPath := filepath.Join(root, item)
+				if _, err := os.Stat(rootPath); err == nil {
+					item = rootPath
+				}
+			}
 			paths = append(paths, item)
 		}
 	}

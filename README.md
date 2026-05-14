@@ -279,7 +279,7 @@ Existing hook content is preserved. DevDoctor only adds or removes the block bet
 
 ## Extensibility
 
-The architecture supports future modules for Kubernetes, Redis, PostgreSQL, Git hooks, CI integrations, and editor plugins without major refactoring.
+The architecture supports additional scanners, rule packs, custom YAML plugins, CI integrations, and editor plugins without major refactoring.
 
 ## Development
 
