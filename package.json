@@ -1,10 +1,17 @@
 {
   "name": "@riteshkumar04/stack-audit",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "The Local-First Backend Health & Security Audit Tool",
   "bin": {
     "stack": "bin/stack"
   },
+  "files": [
+    "bin",
+    "scripts",
+    "README.md",
+    "CONTRIBUTING.md",
+    "LICENSE"
+  ],
   "scripts": {
     "postinstall": "node scripts/install.js"
   },
@@ -20,6 +27,6 @@
     "cli",
     "tui"
   ],
-  "author": "neutron420",
+  "author": "riteshkumar04",
   "license": "MIT"
 }
