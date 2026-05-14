@@ -20,9 +20,12 @@ import (
 )
 
 var scanCmd = &cobra.Command{
-	Use:   "scan",
-	Short: "Run a full project scan",
+	Use:   "scan [module...]",
+	Short: "Run a project health scan",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) > 0 {
+			cfg.Modules = args
+		}
 		return runScan(cmd.Context())
 	},
 }
@@ -109,9 +112,12 @@ func runScan(ctx context.Context) error {
 		return err
 	}
 
-	fmt.Fprintln(os.Stdout, formatted)
-	if err := applyExitCode(report); err != nil {
-		return err
+	if cfg.NoTUI {
+		// Clean output for Workbench
+		fmt.Fprintln(os.Stdout, formatted)
+	} else {
+		// Full output for CLI
+		fmt.Fprintln(os.Stdout, formatted)
 	}
 	return nil
 }

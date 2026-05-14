@@ -68,6 +68,15 @@ func (s *Scanner) Scan(ctx context.Context, root string, ruleSet rules.RuleSet) 
 			findings = append(findings, scanEnv(file, string(data))...)
 		}
 	}
+	if len(findings) == 0 {
+		findings = append(findings, scanner.Finding{
+			Severity:    scanner.SeverityInfo,
+			Title:       "No PostgreSQL service found",
+			Description: "We couldn't find any PostgreSQL configuration files, environment variables, or Docker services in your project root.",
+			Category:    "postgres",
+			RuleID:      "postgres_no_service",
+		})
+	}
 	return findings, nil
 }
 

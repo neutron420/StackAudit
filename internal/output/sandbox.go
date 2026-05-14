@@ -71,15 +71,22 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return pollStats()()
 		})
 	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+up", "ctrl+k", "shift+up":
+			m.viewport.LineUp(1)
+			return m, nil
+		case "ctrl+down", "ctrl+j", "shift+down":
+			m.viewport.LineDown(1)
+			return m, nil
+		}
+
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyUp:
-			m.viewport.LineUp(1)
-			return m, nil
+			// Regular up (for input cursor) handled by m.textInput.Update
 		case tea.KeyDown:
-			m.viewport.LineDown(1)
-			return m, nil
+			// Regular down handled by m.textInput.Update
 		case tea.KeyPgUp:
 			m.viewport.ViewUp()
 			return m, nil
@@ -136,7 +143,7 @@ func (m sandboxModel) View() string {
 		return "\n  Initializing..."
 	}
 
-	// 🏔️ TOP HEADER (Centered Logo + Padding)
+	// 🏔️ TOP HEADER (Simplified, Non-Truncating)
 	logo := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#BD93F9")).
 		Bold(true).
@@ -147,32 +154,16 @@ func (m sandboxModel) View() string {
   ____) |  | |/ ____ \ |____| . \ 
  |_____/   |_/_/    \_\_____|_|\_\`)
 
-	centeredLogo := lipgloss.NewStyle().
-		Width(m.width).
-		Align(lipgloss.Center).
-		PaddingTop(1).
-		Render(logo)
-
-	// MISSION & SAFETY MESSAGE (No Emojis, Clean Typography)
-	mission := lipgloss.NewStyle().
-		Width(m.width).
-		Align(lipgloss.Center).
-		Foreground(lipgloss.Color("#9499B0")).
-		Render("The Local-First Backend Health & Security Audit Tool\n" + 
-		       "Guarding your infrastructure by identifying vulnerabilities, leaks, and misconfigurations.\n" + 
-		       lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true).Render("PRIVACY: ") + 
-		       "Everything stays on your machine. No data or secrets ever leave this terminal.")
-
-	statsLine := lipgloss.NewStyle().
-		Width(m.width).
-		Align(lipgloss.Center).
-		Foreground(lipgloss.Color("#8BE9FD")).
-		Render(m.stats)
+	// Center manually to avoid garbling
+	paddingLogo := strings.Repeat(" ", max(0, (m.width-40)/2))
 	
-	header := lipgloss.JoinVertical(lipgloss.Left,
-		centeredLogo,
-		mission,
-		lipgloss.NewStyle().PaddingTop(1).Render(statsLine),
+	missionText := lipgloss.NewStyle().Foreground(lipgloss.Color("#9499B0")).Render("The Local-First Backend Health & Security Audit Tool")
+	statsLine := lipgloss.NewStyle().Foreground(lipgloss.Color("#8BE9FD")).Render(m.stats)
+
+	header := fmt.Sprintf("\n%s%s\n\n%s\n%s\n", 
+		paddingLogo, strings.ReplaceAll(logo, "\n", "\n"+paddingLogo),
+		centerText(missionText, m.width),
+		centerText(statsLine, m.width),
 	)
 
 	// 📊 MAIN VIEWPORT (Command Output)
@@ -182,23 +173,31 @@ func (m sandboxModel) View() string {
 		Render(m.viewport.View())
 
 	// ⌨️ INPUT BAR
-	inputBar := lipgloss.NewStyle().
-		Padding(1, 0).
-		Render(m.textInput.View())
+	inputBar := lipgloss.NewStyle().Padding(1, 2).Render(m.textInput.View())
 
 	// Help Bar
 	help := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#6272A4")).
-		Render("Up/Down Scroll • 'copy' Save to File • Enter Execute • Esc/q Quit")
-	centeredHelp := lipgloss.NewStyle().Width(m.width).Align(lipgloss.Center).Render(help)
-
-	// 🏆 ASSEMBLE
+		Render("Ctrl+Up/Down Scroll • 'copy' Export • Esc/q Quit\n" + 
+		       "Modules: env, docker, secrets, redis, k8s, cicd, postgres")
+	
 	return lipgloss.JoinVertical(lipgloss.Left,
-		lipgloss.NewStyle().Padding(1, 2).Render(header),
+		header,
 		content,
-		lipgloss.NewStyle().Padding(0, 2).Render(inputBar),
-		centeredHelp,
+		inputBar,
+		lipgloss.NewStyle().Width(m.width).Align(lipgloss.Center).Render(help),
 	)
+}
+
+func centerText(str string, width int) string {
+	contentWidth := lipgloss.Width(str)
+	leftPadding := max(0, (width-contentWidth)/2)
+	return strings.Repeat(" ", leftPadding) + str
+}
+
+func max(a, b int) int {
+	if a > b { return a }
+	return b
 }
 
 func getLiveStats() string {

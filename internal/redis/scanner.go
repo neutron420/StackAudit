@@ -45,6 +45,7 @@ func (s *Scanner) Scan(ctx context.Context, root string, ruleSet rules.RuleSet) 
 	}
 
 	findings := []scanner.Finding{}
+	foundService := false
 	for _, file := range files {
 		select {
 		case <-ctx.Done():
@@ -58,13 +59,28 @@ func (s *Scanner) Scan(ctx context.Context, root string, ruleSet rules.RuleSet) 
 		name := strings.ToLower(filepath.Base(file))
 		switch {
 		case name == "redis.conf":
-			findings = append(findings, scanRedisConf(file, string(data))...)
+			res := scanRedisConf(file, string(data))
+			findings = append(findings, res...)
+			if len(res) > 0 { foundService = true }
 		case name == "docker-compose.yml" || name == "docker-compose.yaml" || name == "compose.yml" || name == "compose.yaml":
-			findings = append(findings, scanCompose(file, data)...)
+			res := scanCompose(file, data)
+			findings = append(findings, res...)
+			if len(res) > 0 { foundService = true }
 		case strings.Contains(name, ".env"):
-			findings = append(findings, scanEnv(file, string(data))...)
+			res := scanEnv(file, string(data))
+			findings = append(findings, res...)
+			if len(res) > 0 { foundService = true }
 		}
 	}
+	if len(findings) == 0 && !foundService {
+		findings = append(findings, scanner.Finding{
+			Category:    "redis",
+			Title:       "No Redis service found",
+			Description: "We couldn't find any running Redis services or Docker configurations in your project. If you are using Redis, make sure it is defined in your docker-compose or running locally.",
+			Severity:    scanner.SeverityInfo,
+		})
+	}
+
 	return findings, nil
 }
 
