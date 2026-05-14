@@ -1,0 +1,25 @@
+{
+  "name": "@neutron420/stack-audit",
+  "version": "1.0.6",
+  "description": "The Local-First Backend Health & Security Audit Tool",
+  "bin": {
+    "stack": "bin/stack"
+  },
+  "scripts": {
+    "postinstall": "node scripts/install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neutron420/StackAudit.git"
+  },
+  "keywords": [
+    "audit",
+    "security",
+    "health",
+    "backend",
+    "cli",
+    "tui"
+  ],
+  "author": "neutron420",
+  "license": "MIT"
+}
