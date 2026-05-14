@@ -1,0 +1,17 @@
+root: "."
+rule_packs:
+  - strict
+output: table
+exit_code: true
+min_severity: warning
+baseline: .devdoctor.baseline.json
+module_timeouts:
+  - env=1s
+  - secrets=5s
+  - docker=2s
+  - ci=2s
+  - k8s=3s
+  - redis=2s
+  - postgres=2s
+plugins:
+  - .devdoctor/plugins/team.yaml

@@ -32,6 +32,10 @@ The MVP is complete and production-ready for local scanning. Core modules, rules
 - Per-module timeout budgets
 - YAML custom scanner plugins
 - Git hook installation for pre-commit and pre-push
+- Project config with .devdoctor.yaml
+- Starter setup with devdoctor init
+- GitHub Actions workflow generation
+- HTML report output
 
 ## Screenshots
 
@@ -66,6 +70,8 @@ devdoctor redis
 devdoctor postgres
 devdoctor doctor
 devdoctor fix
+devdoctor init
+devdoctor init github-actions
 devdoctor hooks install
 devdoctor version
 ```
@@ -78,6 +84,7 @@ devdoctor scan --rules ./configs/sample_rules.yaml
 devdoctor scan --rule-pack strict
 devdoctor scan --plugin ./configs/sample_plugin.yaml
 devdoctor scan --output table
+devdoctor scan --output html
 devdoctor scan --no-tui
 ```
 
@@ -88,7 +95,40 @@ devdoctor scan --output table
 devdoctor scan --output json
 devdoctor scan --output markdown
 devdoctor scan --output sarif
+devdoctor scan --output html > devdoctor-report.html
 ```
+
+### Project config
+
+Create `.devdoctor.yaml` to keep common options in the repo:
+
+```yaml
+root: "."
+rule_packs:
+  - strict
+output: table
+exit_code: true
+min_severity: warning
+baseline: .devdoctor.baseline.json
+module_timeouts:
+  - env=1s
+  - secrets=5s
+  - docker=2s
+  - ci=2s
+  - k8s=3s
+  - redis=2s
+  - postgres=2s
+plugins:
+  - .devdoctor/plugins/team.yaml
+```
+
+Use a custom config path when needed:
+
+```bash
+devdoctor scan --config ./devdoctor.ci.yaml
+```
+
+Explicit CLI flags override values from the config file.
 
 ### Ignore file
 
@@ -236,6 +276,18 @@ devdoctor hooks uninstall
 ```
 
 Existing hook content is preserved. DevDoctor only adds or removes the block between its own hook markers.
+
+### Starter setup
+
+Generate practical starter files:
+
+```bash
+devdoctor init
+devdoctor init --baseline --hooks
+devdoctor init github-actions
+```
+
+`devdoctor init` creates `.devdoctor.yaml`, `.devdoctorignore`, and `.devdoctor/plugins/team.yaml` without overwriting existing files unless `--force` is passed. `devdoctor init github-actions` writes `.github/workflows/devdoctor.yml`.
 
 ## Fix mode
 

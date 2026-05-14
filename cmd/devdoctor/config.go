@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -22,7 +23,7 @@ type fileConfig struct {
 }
 
 func applyConfigFile(cmd *cobra.Command) error {
-	if cmd.CommandPath() == rootCmd.CommandPath() {
+	if cmd.CommandPath() == rootCmd.CommandPath() || strings.HasPrefix(cmd.CommandPath(), rootCmd.CommandPath()+" init") {
 		return nil
 	}
 	path := cfg.ConfigPath

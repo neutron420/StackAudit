@@ -91,17 +91,15 @@ func scanWorkflow(path string, data []byte) []scanner.Finding {
 		})
 	}
 
-	if on, ok := raw["on"].(map[string]interface{}); ok {
-		if _, ok := on["pull_request_target"]; ok {
-			findings = append(findings, scanner.Finding{
-				Severity:    scanner.SeverityWarning,
-				Title:       "Workflow uses pull_request_target",
-				Description: "Ensure secrets are not exposed to untrusted forks.",
-				File:        path,
-				Category:    "cicd",
-				RuleID:      "cicd_pull_request_target",
-			})
-		}
+	if hasWorkflowEvent(raw["on"], "pull_request_target") {
+		findings = append(findings, scanner.Finding{
+			Severity:    scanner.SeverityWarning,
+			Title:       "Workflow uses pull_request_target",
+			Description: "Ensure secrets are not exposed to untrusted forks.",
+			File:        path,
+			Category:    "cicd",
+			RuleID:      "cicd_pull_request_target",
+		})
 	}
 
 	content := string(data)
@@ -128,4 +126,21 @@ func scanWorkflow(path string, data []byte) []scanner.Finding {
 	}
 
 	return findings
+}
+
+func hasWorkflowEvent(value interface{}, event string) bool {
+	switch on := value.(type) {
+	case string:
+		return on == event
+	case []interface{}:
+		for _, item := range on {
+			if text, ok := item.(string); ok && text == event {
+				return true
+			}
+		}
+	case map[string]interface{}:
+		_, ok := on[event]
+		return ok
+	}
+	return false
 }
