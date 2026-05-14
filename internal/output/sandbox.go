@@ -14,47 +14,39 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// sandboxModel is the core of our k9s-style interactive shell
 type sandboxModel struct {
 	viewport  viewport.Model
 	textInput textinput.Model
-	ready     bool
-	output    *strings.Builder
-	execute   func(args []string) string
+	output    strings.Builder
+	execute   func([]string) string
+	stats     string
 	width     int
 	height    int
-	stats     string
 }
 
-type statsMsg string
-
-func pollStats() tea.Cmd {
-	return func() tea.Msg {
-		return statsMsg(getLiveStats())
-	}
-}
-
-func RunSandbox(execute func(args []string) string) error {
-	ti := textinput.New()
-	ti.Placeholder = "Type a command (scan, ci, env, docker...)"
-	ti.Focus()
-	ti.CharLimit = 156
-	ti.Width = 50
-	ti.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9")).Bold(true).Render("stack > ")
-
+func RunSandbox(execute func([]string) string) error {
 	m := sandboxModel{
-		textInput: ti,
-		execute:   execute,
-		output:    &strings.Builder{},
-		stats:     "Polling system metrics...",
+		execute: execute,
+		stats:   getLiveStats(),
 	}
 
-	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	p := tea.NewProgram(m, tea.WithAltScreen())
 	_, err := p.Run()
 	return err
 }
 
 func (m sandboxModel) Init() tea.Cmd {
+	m.textInput = textinput.New()
+	m.textInput.Placeholder = "Type a command (scan, ci, env, docker...)"
+	m.textInput.Focus()
+	m.textInput.CharLimit = 156
+	m.textInput.Width = 60
+	m.textInput.Prompt = " stack > "
+	m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9")).Bold(true)
+
+	m.viewport = viewport.New(80, 20)
+	m.viewport.SetContent("Welcome to the STACK Workbench. Type a command to begin.\n\nAvailable: scan, scan <module>, ci, env, docker, secrets, redis, k8s, postgres\n           help, copy, clear, quit")
+
 	return tea.Batch(textinput.Blink, pollStats())
 }
 
@@ -90,38 +82,20 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case statsMsg:
 		m.stats = string(msg)
 		return m, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-			return pollStats()()
+			return statsMsg(getLiveStats())
 		})
 
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+up", "ctrl+k", "shift+up":
-			m.viewport.LineUp(1)
-			return m, nil
-		case "ctrl+down", "ctrl+j", "shift+down":
-			m.viewport.LineDown(1)
-			return m, nil
-		}
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		m.viewport.Width = msg.Width
+		m.viewport.Height = msg.Height - 12
+		return m, nil
 
+	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyUp:
-			if m.textInput.Value() == "" {
-				m.viewport.LineUp(1)
-				return m, nil
-			}
-		case tea.KeyDown:
-			if m.textInput.Value() == "" {
-				m.viewport.LineDown(1)
-				return m, nil
-			}
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
-		case tea.KeyPgUp:
-			m.viewport.ViewUp()
-			return m, nil
-		case tea.KeyPgDown:
-			m.viewport.ViewDown()
-			return m, nil
 		case tea.KeyEnter:
 			input := m.textInput.Value()
 			if input == "exit" || input == "quit" || input == "q" {
@@ -145,25 +119,6 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.runCommand(args)
 			}
 		}
-
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-
-		// Header = 10 lines, input = 1, footer = 3, borders = 2
-		vpHeight := msg.Height - 16
-		if vpHeight < 4 {
-			vpHeight = 4
-		}
-
-		if !m.ready {
-			m.viewport = viewport.New(msg.Width-4, vpHeight)
-			m.viewport.SetContent("Welcome to the STACK Workbench. Type a command to begin.\n\nAvailable: scan, scan <module>, ci, env, docker, secrets, redis, k8s, postgres\n           help, copy, clear, quit")
-			m.ready = true
-		} else {
-			m.viewport.Width = msg.Width - 4
-			m.viewport.Height = vpHeight
-		}
 	}
 
 	m.textInput, tiCmd = m.textInput.Update(msg)
@@ -173,61 +128,58 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m sandboxModel) View() string {
-	if !m.ready {
-		return "\n  Initializing..."
-	}
+	logo := `
+      ____ _____  _    ____ _  __
+     / ___|_   _|/ \  / ___| |/ /
+     \___ \ | | / _ \| |   | ' / 
+      ___) || |/ ___ \ |___| . \ 
+     |____/ |_/_/   \_\____|_|\_\
+                                 `
 
-	// --- STYLES ---
-	purple := lipgloss.Color("#BD93F9")
-	muted := lipgloss.Color("#6272A4")
-	cyan := lipgloss.Color("#8BE9FD")
+	logoStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#BD93F9")).
+		Bold(true)
 
-	centerStyle := lipgloss.NewStyle().Width(m.width).Align(lipgloss.Center)
+	centeredLogo := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, logoStyle.Render(logo))
 
-	// --- LOGO ---
-	logo := lipgloss.NewStyle().Foreground(purple).Bold(true).Render(
-		" _____ _______       _____ _  __\n" +
-			"/ ____|__   __|/\\   / ____| |/ /\n" +
-			"| (___    | |  /  \\ | |    | ' / \n" +
-			" \\___ \\   | | / /\\ \\| |    |  <  \n" +
-			" ____) |  | |/ ____ \\ |____| . \\ \n" +
-			"|_____/   |_/_/    \\_\\_____|_|\\_\\")
+	tagline := "The Local-First Backend Health & Security Audit Tool"
+	centeredTagline := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, tagline)
 
-	// --- MISSION ---
-	mission := lipgloss.NewStyle().Foreground(muted).Render("The Local-First Backend Health & Security Audit Tool")
+	statsStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#8BE9FD")).
+		Bold(true)
+	centeredStats := lipgloss.PlaceHorizontal(m.width, lipgloss.Center, statsStyle.Render(m.stats))
 
-	// --- STATS ---
-	stats := lipgloss.NewStyle().Foreground(cyan).Render(m.stats)
-
-	// --- HEADER BLOCK (centered) ---
 	header := lipgloss.JoinVertical(lipgloss.Center,
-		"",
-		centerStyle.Render(logo),
-		centerStyle.Render(mission),
-		centerStyle.Render(stats),
+		centeredLogo,
+		centeredTagline,
+		centeredStats,
+		strings.Repeat("─", m.width),
 	)
 
-	// --- VIEWPORT with border ---
-	vpBorder := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder(), true, false).
-		BorderForeground(muted).
-		Width(m.width - 2).
-		Render(m.viewport.View())
-
-	// --- INPUT ---
-	inputBar := lipgloss.NewStyle().PaddingLeft(1).Render(m.textInput.View())
-
-	// --- FOOTER ---
-	footer := centerStyle.Foreground(muted).Render(
+	help := lipgloss.NewStyle().Foreground(lipgloss.Color("#6272A4")).Render(
 		"Ctrl+Up/Down Scroll  |  'copy' Export  |  'clear' Reset  |  Esc/q Quit\n" +
-			"Modules: env, docker, secrets, redis, k8s, cicd, postgres")
+			"         Modules: env, docker, secrets, redis, k8s, cicd, postgres")
+
+	footer := lipgloss.JoinVertical(lipgloss.Left,
+		strings.Repeat("─", m.width),
+		m.textInput.View(),
+		lipgloss.PlaceHorizontal(m.width, lipgloss.Center, help),
+	)
 
 	return lipgloss.JoinVertical(lipgloss.Left,
 		header,
-		vpBorder,
-		inputBar,
+		m.viewport.View(),
 		footer,
 	)
+}
+
+type statsMsg string
+
+func pollStats() tea.Cmd {
+	return func() tea.Msg {
+		return statsMsg(getLiveStats())
+	}
 }
 
 func getLiveStats() string {
@@ -236,11 +188,11 @@ func getLiveStats() string {
 		host = host[:12] + "..."
 	}
 
-	var cpuStr, memStr string
+	var cpuStr, memStr, diskStr string
 
 	switch runtime.GOOS {
 	case "windows":
-		cmdText := "(Get-CimInstance Win32_Processor).LoadPercentage; [math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB, 2)"
+		cmdText := "(Get-CimInstance Win32_Processor).LoadPercentage; [math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB, 2); [math]::Round((Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='C:'\").FreeSpace / 1GB, 1)"
 		cmd := exec.Command("powershell", "-NoProfile", "-Command", cmdText)
 		out, _ := cmd.Output()
 
@@ -254,36 +206,37 @@ func getLiveStats() string {
 			}
 		}
 
-		if len(valid) >= 2 {
+		if len(valid) >= 3 {
 			cpuStr = valid[0] + "%"
 			memStr = valid[1] + " GB FREE"
+			diskStr = valid[2] + " GB FREE"
 		}
 
-	case "linux":
-		cpuOut, _ := os.ReadFile("/proc/loadavg")
-		fields := strings.Fields(string(cpuOut))
-		if len(fields) > 0 {
-			cpuStr = fields[0]
+	case "linux", "darwin":
+		// CPU
+		var cpuCmd *exec.Cmd
+		if runtime.GOOS == "linux" {
+			cpuCmd = exec.Command("sh", "-c", "top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%* id.*/\\1/' | awk '{print 100 - $1\"%\"}'")
+		} else {
+			cpuCmd = exec.Command("sh", "-c", "top -l 1 | grep 'CPU usage' | awk '{print $3}'")
 		}
+		cpuOut, _ := cpuCmd.Output()
+		cpuStr = strings.TrimSpace(string(cpuOut))
 
-		memOut, _ := exec.Command("free", "-m").Output()
-		lines := strings.Split(string(memOut), "\n")
-		if len(lines) > 1 {
-			memFields := strings.Fields(lines[1])
-			if len(memFields) > 3 {
-				memStr = memFields[3] + " MB Free"
-			}
+		// MEM
+		var memCmd *exec.Cmd
+		if runtime.GOOS == "linux" {
+			memCmd = exec.Command("sh", "-c", "free -m | grep Mem | awk '{print $4\"MB FREE\"}'")
+		} else {
+			memCmd = exec.Command("sh", "-c", "vm_stat | perl -ne '/free: +(\\d+)/ && print ($1*4096/1024/1024).\"MB FREE\"'")
 		}
-
-	case "darwin":
-		cpuOut, _ := exec.Command("sysctl", "-n", "vm.loadavg").Output()
-		fields := strings.Fields(string(cpuOut))
-		if len(fields) > 1 {
-			cpuStr = fields[1]
-		}
-
-		memOut, _ := exec.Command("sysctl", "-n", "hw.memsize").Output()
+		memOut, _ := memCmd.Output()
 		memStr = strings.TrimSpace(string(memOut))
+
+		// DISK
+		diskCmd := exec.Command("sh", "-c", "df -h / | tail -1 | awk '{print $4\" FREE\"}'")
+		diskOut, _ := diskCmd.Output()
+		diskStr = strings.TrimSpace(string(diskOut))
 	}
 
 	if cpuStr == "" {
@@ -292,7 +245,10 @@ func getLiveStats() string {
 	if memStr == "" {
 		memStr = "N/A"
 	}
+	if diskStr == "" {
+		diskStr = "N/A"
+	}
 
-	return fmt.Sprintf("HOST: %s  |  OS: %s  |  CPU: %s  |  MEM: %s",
-		strings.ToUpper(host), strings.ToUpper(runtime.GOOS), cpuStr, memStr)
+	return fmt.Sprintf("HOST: %s  |  OS: %s  |  CPU: %s  |  MEM: %s  |  DISK: %s",
+		strings.ToUpper(host), strings.ToUpper(runtime.GOOS), cpuStr, memStr, diskStr)
 }
