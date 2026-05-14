@@ -66,8 +66,13 @@ func parseTimeoutDuration(value string) (time.Duration, error) {
 
 func normalizeModuleName(value string) string {
 	name := strings.ToLower(strings.TrimSpace(value))
-	if name == "ci" {
+	switch name {
+	case "ci":
 		return "cicd"
+	case "k8s":
+		return "kubernetes"
+	case "postgresql":
+		return "postgres"
 	}
 	return name
 }

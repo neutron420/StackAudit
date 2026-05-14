@@ -6,9 +6,13 @@ import (
 	"os"
 
 	"devdoctor/internal/cicd"
+	"devdoctor/internal/custom"
 	"devdoctor/internal/docker"
 	"devdoctor/internal/env"
+	"devdoctor/internal/kubernetes"
 	"devdoctor/internal/output"
+	"devdoctor/internal/postgres"
+	"devdoctor/internal/redis"
 	"devdoctor/internal/scanner"
 	"devdoctor/internal/secrets"
 
@@ -44,7 +48,15 @@ func runScan(ctx context.Context) error {
 			secrets.NewScanner(),
 			docker.NewScanner(),
 			cicd.NewScanner(),
+			kubernetes.NewScanner(),
+			redis.NewScanner(),
+			postgres.NewScanner(),
 		}
+		customModules, err := custom.NewScanners(cfg.RootPath, cfg.PluginPaths)
+		if err != nil {
+			return scanner.Report{}, err
+		}
+		modules = append(modules, customModules...)
 		return scanner.Run(ctx, cfg.RootPath, ruleSet, modules, options)
 	}
 

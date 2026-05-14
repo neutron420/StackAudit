@@ -10,3 +10,21 @@ rules:
 
   - id: secret_high_entropy
     severity: info
+
+  - id: k8s_missing_resources
+    severity: info
+
+  - id: k8s_run_as_non_root
+    severity: info
+
+  - id: redis_missing_auth
+    severity: warning
+
+  - id: redis_appendonly_disabled
+    severity: info
+
+  - id: postgres_url_ssl_disabled
+    severity: info
+
+  - id: postgres_port_exposed
+    severity: info

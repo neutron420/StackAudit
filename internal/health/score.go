@@ -25,9 +25,9 @@ func CalculateScores(findings []Finding) Scores {
 		switch finding.Category {
 		case "secrets":
 			security -= penalty
-		case "docker", "cicd":
+		case "docker", "cicd", "kubernetes", "redis", "postgres":
 			infra -= penalty
-		case "env":
+		case "env", "custom":
 			config -= penalty
 		}
 	}

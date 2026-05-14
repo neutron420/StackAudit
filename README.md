@@ -1,6 +1,6 @@
 # DevDoctor
 
-DevDoctor is a local-first backend project health scanner for developers. It scans environment files, secrets, Docker configuration, and CI/CD workflows to surface production safety issues.
+DevDoctor is a local-first backend project health scanner for developers. It scans environment files, secrets, Docker, CI/CD, Kubernetes, Redis, and PostgreSQL configuration to surface production safety issues.
 
 ## Status
 
@@ -19,6 +19,9 @@ The MVP is complete and production-ready for local scanning. Core modules, rules
 - Secret leak detection with regex and entropy heuristics
 - Dockerfile and docker-compose.yml analysis
 - CI/CD workflow inspection (.github/workflows)
+- Kubernetes manifest checks
+- Redis configuration and compose checks
+- PostgreSQL configuration and compose checks
 - Health score engine with security/infrastructure/configuration breakdown
 - Fix mode with confirmation and backups
 - Ignore file support (.devdoctorignore)
@@ -27,14 +30,8 @@ The MVP is complete and production-ready for local scanning. Core modules, rules
 - Configurable rule severities and embedded/custom rule packs
 - Baseline snapshots to suppress known findings
 - Per-module timeout budgets
-
-## What is still left (nice-to-have roadmap)
-
-These are optional enhancements. The current release already meets the product vision for local-first scanning.
-
-- Kubernetes, Redis, PostgreSQL scanners
-- Plugin system for custom scanners
-- Git hooks integration (pre-commit, pre-push)
+- YAML custom scanner plugins
+- Git hook installation for pre-commit and pre-push
 
 ## Screenshots
 
@@ -64,8 +61,12 @@ devdoctor env
 devdoctor docker
 devdoctor ci
 devdoctor secrets
+devdoctor kubernetes
+devdoctor redis
+devdoctor postgres
 devdoctor doctor
 devdoctor fix
+devdoctor hooks install
 devdoctor version
 ```
 
@@ -75,6 +76,7 @@ Common flags:
 devdoctor scan --path .
 devdoctor scan --rules ./configs/sample_rules.yaml
 devdoctor scan --rule-pack strict
+devdoctor scan --plugin ./configs/sample_plugin.yaml
 devdoctor scan --output table
 devdoctor scan --no-tui
 ```
@@ -178,6 +180,63 @@ devdoctor scan --module-timeout env=500ms,secrets=5s,docker=2s,ci=2s
 
 When a module exceeds its budget, DevDoctor reports a `module_timeout` warning for that module and keeps the rest of the scan moving.
 
+### Kubernetes, Redis, and PostgreSQL
+
+Run the full scan or target a specific backend surface:
+
+```bash
+devdoctor kubernetes
+devdoctor redis
+devdoctor postgres
+```
+
+The Kubernetes scanner inspects YAML manifests with `apiVersion` and `kind`, including Deployments, Pods, StatefulSets, DaemonSets, Jobs, CronJobs, and Services. It flags risky settings such as `latest` images, missing resource limits, privileged containers, root-capable containers, host namespaces, and public LoadBalancer services.
+
+The Redis scanner checks `redis.conf`, compose services, and env files for disabled protected mode, unauthenticated Redis, all-interface binding, exposed port 6379, disabled append-only persistence, and unauthenticated Redis URLs.
+
+The PostgreSQL scanner checks `postgresql.conf`, `pg_hba.conf`, compose services, and env files for trust authentication, open CIDR rules, all-interface listening, SSL disabled, weak compose passwords, exposed port 5432, and connection URLs with `sslmode=disable`.
+
+### Custom scanner plugins
+
+Custom plugins are YAML files that define project-specific text or regex checks. Pass them explicitly with `--plugin`, or place them in `.devdoctor/plugins/*.yaml` to load them automatically during `devdoctor scan`.
+
+```bash
+devdoctor scan --plugin ./configs/sample_plugin.yaml
+```
+
+Example plugin:
+
+```yaml
+name: team
+rules:
+  - id: no_debug_env
+    title: Debug mode enabled
+    severity: warning
+    category: custom
+    path: ".env*"
+    contains: "DEBUG=true"
+
+  - id: no_local_admin_email
+    title: Local admin email is committed
+    severity: info
+    paths:
+      - "**/*.go"
+      - "**/*.ts"
+    regex: "admin@example\\.com"
+```
+
+### Git hooks
+
+Install managed pre-commit and pre-push hook blocks:
+
+```bash
+devdoctor hooks install
+devdoctor hooks install --hook pre-commit --command "devdoctor scan --exit-code --min-severity warning"
+devdoctor hooks uninstall
+```
+
+Existing hook content is preserved. DevDoctor only adds or removes the block between its own hook markers.
+
 ## Fix mode
 
 `devdoctor fix` generates a plan and asks for confirmation before applying changes. It can:
@@ -196,6 +255,11 @@ When a module exceeds its budget, DevDoctor reports a `module_timeout` warning f
     /docker
     /cicd
     /secrets
+    /kubernetes
+    /redis
+    /postgres
+    /custom
+    /githooks
     /rules
     /output
     /health

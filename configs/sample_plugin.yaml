@@ -1,0 +1,20 @@
+name: team
+rules:
+  - id: no_debug_env
+    title: Debug mode enabled
+    description: Disable DEBUG in committed environment files.
+    severity: warning
+    category: custom
+    path: ".env*"
+    contains: "DEBUG=true"
+
+  - id: no_local_admin_email
+    title: Local admin email is committed
+    description: Replace local-only seed values before production.
+    severity: info
+    category: custom
+    paths:
+      - "**/*.go"
+      - "**/*.ts"
+      - "**/*.js"
+    regex: "admin@example\\.com"

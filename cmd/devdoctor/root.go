@@ -23,6 +23,7 @@ type appConfig struct {
 	BaselinePath   string
 	UpdateBaseline bool
 	ModuleTimeouts []string
+	PluginPaths    []string
 }
 
 var cfg appConfig
@@ -55,14 +56,19 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfg.BaselinePath, "baseline", ".devdoctor.baseline.json", "Baseline file path")
 	rootCmd.PersistentFlags().BoolVar(&cfg.UpdateBaseline, "update-baseline", false, "Write a baseline file from the current scan")
 	rootCmd.PersistentFlags().StringSliceVar(&cfg.ModuleTimeouts, "module-timeout", nil, "Module timeout budget: duration for all modules or module=duration (e.g. 2s, env=500ms,secrets=5s)")
+	rootCmd.PersistentFlags().StringSliceVar(&cfg.PluginPaths, "plugin", nil, "Custom scanner plugin YAML path (repeatable)")
 
 	rootCmd.AddCommand(scanCmd)
 	rootCmd.AddCommand(envCmd)
 	rootCmd.AddCommand(dockerCmd)
 	rootCmd.AddCommand(ciCmd)
 	rootCmd.AddCommand(secretsCmd)
+	rootCmd.AddCommand(kubernetesCmd)
+	rootCmd.AddCommand(redisCmd)
+	rootCmd.AddCommand(postgresCmd)
 	rootCmd.AddCommand(doctorCmd)
 	rootCmd.AddCommand(fixCmd)
+	rootCmd.AddCommand(hooksCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 

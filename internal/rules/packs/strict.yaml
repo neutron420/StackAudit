@@ -16,3 +16,27 @@ rules:
 
   - id: secret_high_entropy
     severity: warning
+
+  - id: k8s_privileged_container
+    severity: critical
+
+  - id: k8s_host_namespace
+    severity: critical
+
+  - id: k8s_missing_resources
+    severity: warning
+
+  - id: redis_missing_auth
+    severity: critical
+
+  - id: redis_port_exposed
+    severity: warning
+
+  - id: postgres_trust_auth
+    severity: critical
+
+  - id: postgres_weak_password
+    severity: critical
+
+  - id: postgres_port_exposed
+    severity: warning
