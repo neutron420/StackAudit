@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -75,4 +76,22 @@ func normalizeModuleName(value string) string {
 		return "postgres"
 	}
 	return name
+}
+
+func applyExitCode(report scanner.Report) error {
+	if !cfg.ExitCode {
+		return nil
+	}
+
+	severity := scanner.Severity(strings.ToLower(cfg.MinSeverity))
+	if severity == "" {
+		severity = scanner.SeverityWarning
+	}
+
+	for _, finding := range report.Findings {
+		if finding.Severity.IsAtLeast(severity) {
+			os.Exit(1)
+		}
+	}
+	return nil
 }

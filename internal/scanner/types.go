@@ -4,6 +4,16 @@ import "time"
 
 type Severity string
 
+func (s Severity) IsAtLeast(severity Severity) bool {
+	order := map[Severity]int{
+		SeverityCritical: 4,
+		SeverityWarning:  3,
+		SeverityInfo:     2,
+		SeveritySuccess:  1,
+	}
+	return order[s] >= order[severity]
+}
+
 const (
 	SeverityCritical Severity = "critical"
 	SeverityWarning  Severity = "warning"

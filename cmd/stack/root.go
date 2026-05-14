@@ -41,7 +41,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		switch choice {
-		case "🚀 Full Health Scan":
+		case "Full Health Scan":
 			return scanCmd.RunE(cmd, nil)
 		case "🩺 Environment Doctor":
 			return doctorCmd.RunE(cmd, nil)
@@ -51,6 +51,9 @@ var rootCmd = &cobra.Command{
 			return initDemoCmd.RunE(cmd, nil)
 		case "📈 View Last Report":
 			fmt.Println("Opening last report...")
+			return nil
+		case "🚪 EXIT SANDBOX", "":
+			fmt.Println("Goodbye!")
 			return nil
 		}
 		return nil
@@ -104,6 +107,7 @@ func init() {
 	rootCmd.AddCommand(fixCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(hooksCmd)
+	rootCmd.AddCommand(exitCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 

@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -53,26 +54,28 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 
 func RunSandbox() (string, error) {
 	items := []list.Item{
-		item("Full Health Scan"),
-		item("Environment Doctor"),
-		item("Interactive Fixer"),
-		item("Create Demo Project"),
-		item("View Last Report"),
+		item("🚀 Full Health Scan"),
+		item("🩺 Environment Doctor"),
+		item("🛠️  Interactive Fixer"),
+		item("🧪 Create Demo Project"),
+		item("📈 View Last Report"),
+		item("🚪 EXIT SANDBOX"),
 	}
 
-	l := list.New(items, itemDelegate{}, 40, 10)
-	l.Title = "STACK WORKBENCH"
+	l := list.New(items, itemDelegate{}, 50, 12)
+	l.Title = "WORKBENCH"
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
 	l.Styles.Title = lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("#50FA7B")).
-		MarginBottom(1)
+		Padding(0, 1).
+		Background(lipgloss.Color("#282A36"))
 
 	m := sandboxModel{list: l}
 	m.refreshStatus()
 
-	p := tea.NewProgram(m)
+	p := tea.NewProgram(m, tea.WithAltScreen())
 	final, err := p.Run()
 	if err != nil {
 		return "", err
@@ -138,20 +141,34 @@ func (m sandboxModel) View() string {
 		return ""
 	}
 
-	// 🎨 Premium Theme Colors
-	bgStyle := lipgloss.NewStyle().
-		Background(lipgloss.Color("#1E1E2E")).
-		Foreground(lipgloss.Color("#CDD6F4"))
+	// 🎨 Premium Theme & Dimensions
+	width := 100 // Fallback
+	height := 30 // Fallback
 
-	header := styleBranding.Copy().
+	// 🏔️ TOP HEADER (k9s style)
+	headerLeft := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#8BE9FD")).
+		Render(fmt.Sprintf(
+			"Context: %s\nUser:    %s\nCPU:     %s\nMEM:     %s",
+			"local", os.Getenv("USERNAME"), "2%", "14%",
+		))
+
+	logo := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#BD93F9")).
 		Bold(true).
-		Padding(1, 4).
-		MarginBottom(1).
-		Foreground(lipgloss.Color("#FFFFFF")).
-		Background(lipgloss.Color("#BD93F9")).
-		Render("STACK WORKBENCH v1.0.0")
+		Render(`   _____ _______       _____ _  __
+  / ____|__   __|/\   / ____| |/ /
+ | (___    | |  /  \ | |    | ' / 
+  \___ \   | | / /\ \| |    |  <  
+  ____) |  | |/ ____ \ |____| . \ 
+ |_____/   |_/_/    \_\_____|_|\_\`)
 
-	// Status helpers
+	header := lipgloss.JoinHorizontal(lipgloss.Top,
+		lipgloss.NewStyle().Width(40).Render(headerLeft),
+		lipgloss.NewStyle().Width(width-40).Align(lipgloss.Right).Render(logo),
+	)
+
+	// 📊 MAIN CONTENT
 	getStatusStyle := func(status string) lipgloss.Style {
 		switch status {
 		case "READY", "OK":
@@ -164,35 +181,42 @@ func (m sandboxModel) View() string {
 	}
 
 	sidebar := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
+		Border(lipgloss.NormalBorder(), false, true, false, false).
 		BorderForeground(lipgloss.Color("#6272A4")).
 		Padding(1, 2).
-		Width(32).
+		Width(30).
+		Height(height - 12).
 		Render(fmt.Sprintf(
 			"%s\n\n%s %s\n%s %s\n%s %s",
-			lipgloss.NewStyle().Bold(true).Underline(true).Foreground(lipgloss.Color("#8BE9FD")).Render("PROJECT STATUS"),
+			lipgloss.NewStyle().Bold(true).Underline(true).Foreground(lipgloss.Color("#FF79C6")).Render("PROJECT STATUS"),
 			"󰄬 Docker:", getStatusStyle(m.docker).Render(m.docker),
 			"󰄬 K8s:   ", getStatusStyle(m.k8s).Render(m.k8s),
 			"󰄬 Config:", getStatusStyle(m.config).Render(m.config),
 		))
 
 	mainArea := lipgloss.NewStyle().
-		MarginLeft(4).
+		Padding(1, 4).
 		Render(m.list.View())
 
 	content := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, mainArea)
 
+	// ⌨️ BOTTOM HOTKEY BAR
+	hotkeys := []string{
+		lipgloss.NewStyle().Background(lipgloss.Color("#6272A4")).Foreground(lipgloss.Color("#FFFFFF")).Render(" <s> Scan "),
+		lipgloss.NewStyle().Background(lipgloss.Color("#6272A4")).Foreground(lipgloss.Color("#FFFFFF")).Render(" <d> Doctor "),
+		lipgloss.NewStyle().Background(lipgloss.Color("#6272A4")).Foreground(lipgloss.Color("#FFFFFF")).Render(" <f> Fix "),
+		lipgloss.NewStyle().Background(lipgloss.Color("#FF5555")).Foreground(lipgloss.Color("#FFFFFF")).Render(" <q> Quit "),
+	}
 	footer := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#6272A4")).
-		MarginTop(2).
-		Render("↑/↓: navigate • enter: select • q: quit")
+		Background(lipgloss.Color("#44475A")).
+		Width(width).
+		Padding(0, 1).
+		Render(strings.Join(hotkeys, "  "))
 
-	// 🏆 THE BEAUTIFUL CONTAINER
-	container := lipgloss.NewStyle().
-		Border(lipgloss.ThickBorder()).
-		BorderForeground(lipgloss.Color("#BD93F9")).
-		Padding(2, 4).
-		Render(lipgloss.JoinVertical(lipgloss.Left, header, content, footer))
-
-	return bgStyle.Render(container)
+	// 🏆 ASSEMBLE EVERYTHING
+	return lipgloss.JoinVertical(lipgloss.Left,
+		lipgloss.NewStyle().Padding(1, 2).Render(header),
+		lipgloss.NewStyle().Padding(1, 0).Height(height-8).Render(content),
+		footer,
+	)
 }
