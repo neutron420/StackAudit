@@ -128,13 +128,13 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 
 		if !m.ready {
-			m.viewport = viewport.New(msg.Width, msg.Height-16)
-			m.viewport.YPosition = 12
+			m.viewport = viewport.New(msg.Width, msg.Height-18)
+			m.viewport.YPosition = 14
 			m.viewport.SetContent("Welcome to the STACK Sandbox. Type a command to begin.")
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - 16
+			m.viewport.Height = msg.Height - 18
 		}
 	}
 
@@ -146,7 +146,7 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m sandboxModel) View() string {
 	if !m.ready {
-		return "\n  Initializing..."
+		return "Initializing..."
 	}
 
 	// 🏔️ TOP HEADER (Centered & Clean)
@@ -167,40 +167,35 @@ func (m sandboxModel) View() string {
 		logo,
 		missionText,
 		statsLine,
+		"\n",
 	)
 	
-	// Center the entire header block across the width
-	header := lipgloss.NewStyle().Width(m.width).Align(lipgloss.Center).Render(headerContent)
+	header := centerText(headerContent, m.width)
 
-	// 📊 MAIN VIEWPORT (Command Output)
-	content := lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder(), true, false, true, false).
-		BorderForeground(lipgloss.Color("#6272A4")).
-		Render(m.viewport.View())
+	// 📊 VIEWPORT & INPUT
+	footer := fmt.Sprintf("\n%s\n%s", 
+		centerText(lipgloss.NewStyle().Foreground(lipgloss.Color("#6272A4")).Render("Ctrl Up/Down Scroll • 'copy' Export • Esc/q Quit"), m.width),
+		centerText(lipgloss.NewStyle().Foreground(lipgloss.Color("#6272A4")).Render("Modules: env, docker, secrets, redis, k8s, cicd, postgres"), m.width),
+	)
 
-	// ⌨️ INPUT BAR
-	inputBar := lipgloss.NewStyle().Padding(0, 2).Render(m.textInput.View())
-
-	// Help Bar
-	help := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#6272A4")).
-		Width(m.width).
-		Align(lipgloss.Center).
-		Render("Ctrl+Up/Down Scroll • 'copy' Export • Esc/q Quit\n" + 
-		       "Modules: env, docker, secrets, redis, k8s, cicd, postgres")
-	
 	return lipgloss.JoinVertical(lipgloss.Left,
 		header,
-		content,
-		inputBar,
-		help,
+		m.viewport.View(),
+		m.textInput.View(),
+		footer,
 	)
 }
 
 func centerText(str string, width int) string {
-	contentWidth := lipgloss.Width(str)
-	leftPadding := max(0, (width-contentWidth)/2)
-	return strings.Repeat(" ", leftPadding) + str
+	lines := strings.Split(str, "\n")
+	var centered []string
+	for _, line := range lines {
+		contentWidth := lipgloss.Width(line)
+		padding := (width - contentWidth) / 2
+		if padding < 0 { padding = 0 }
+		centered = append(centered, strings.Repeat(" ", padding)+line)
+	}
+	return strings.Join(centered, "\n")
 }
 
 func max(a, b int) int {
