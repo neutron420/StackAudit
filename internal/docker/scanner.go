@@ -54,6 +54,15 @@ func (s *Scanner) Scan(ctx context.Context, root string, ruleSet rules.RuleSet) 
 		}
 	}
 
+	if len(findings) == 0 {
+		findings = append(findings, scanner.Finding{
+			Category:    "docker",
+			Title:       "No Docker configuration found",
+			Description: "We couldn't find any Dockerfiles or docker-compose files in your project root.",
+			Severity:    scanner.SeverityInfo,
+		})
+	}
+
 	return findings, nil
 }
 

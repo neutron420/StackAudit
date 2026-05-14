@@ -22,5 +22,15 @@ func (s *Scanner) Scan(ctx context.Context, root string, ruleSet rules.RuleSet) 
 	if err != nil {
 		return nil, err
 	}
-	return report.Findings, nil
+	findings := report.Findings
+	if len(findings) == 0 {
+		findings = append(findings, scanner.Finding{
+			Category:    "env",
+			Title:       "No environment files found",
+			Description: "We couldn't find any .env or environment configuration files in your project root.",
+			Severity:    scanner.SeverityInfo,
+		})
+	}
+
+	return findings, nil
 }

@@ -151,12 +151,12 @@ func (m sandboxModel) View() string {
 
 	// 🏔️ TOP HEADER (Centered & Clean)
 	logoStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9")).Bold(true)
-	logo := logoStyle.Render(`   _____ _______       _____ _  __
-  / ____|__   __|/\   / ____| |/ /
- | (___    | |  /  \ | |    | ' / 
-  \___ \   | | / /\ \| |    |  <  
-  ____) |  | |/ ____ \ |____| . \ 
- |_____/   |_/_/    \_\_____|_|\_\`)
+	logo := logoStyle.Render(`_____ _______       _____ _  __
+/ ____|__   __|/\   / ____| |/ /
+| (___    | |  /  \ | |    | ' / 
+ \___ \   | | / /\ \| |    |  <  
+ ____) |  | |/ ____ \ |____| . \ 
+|_____/   |_/_/    \_\_____|_|\_\`)
 
 	missionText := lipgloss.NewStyle().Foreground(lipgloss.Color("#9499B0")).Render("The Local-First Backend Health & Security Audit Tool")
 	statsLine := lipgloss.NewStyle().Foreground(lipgloss.Color("#8BE9FD")).Render(m.stats)
@@ -165,10 +165,8 @@ func (m sandboxModel) View() string {
 	headerContent := lipgloss.JoinVertical(lipgloss.Center,
 		"\n",
 		logo,
-		"\n",
 		missionText,
 		statsLine,
-		"\n",
 	)
 	
 	// Center the entire header block across the width

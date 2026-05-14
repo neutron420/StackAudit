@@ -83,11 +83,13 @@ func runScan(cmd *cobra.Command) error {
 			}
 		}
 
-		customModules, err := custom.NewScanners(cfg.RootPath, cfg.PluginPaths)
-		if err != nil {
-			return scanner.Report{}, err
+		if len(selectedNames) == 0 {
+			customModules, err := custom.NewScanners(cfg.RootPath, cfg.PluginPaths)
+			if err != nil {
+				return scanner.Report{}, err
+			}
+			modules = append(modules, customModules...)
 		}
-		modules = append(modules, customModules...)
 		return scanner.Run(ctx, cfg.RootPath, ruleSet, modules, options)
 	}
 

@@ -56,6 +56,15 @@ func (s *Scanner) Scan(ctx context.Context, root string, ruleSet rules.RuleSet) 
 		}
 		findings = append(findings, scanManifest(file, data, ruleSet)...)
 	}
+	if len(findings) == 0 {
+		findings = append(findings, scanner.Finding{
+			Category:    "kubernetes",
+			Title:       "No Kubernetes manifests found",
+			Description: "We couldn't find any .yaml or .yml files that look like Kubernetes manifests in your project.",
+			Severity:    scanner.SeverityInfo,
+		})
+	}
+
 	return findings, nil
 }
 
