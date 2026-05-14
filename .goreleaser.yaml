@@ -36,16 +36,6 @@ nfpms:
       - deb
       - rpm
 
-scoops:
-  - name: stack
-    repository:
-      owner: neutron420
-      name: scoop-bucket
-    directory: bucket
-    homepage: https://github.com/neutron420/StackAudit
-    description: The Local-First Backend Health & Security Audit Tool
-    license: MIT
-
 checksum:
   name_template: 'checksums.txt'
 
