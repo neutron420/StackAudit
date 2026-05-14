@@ -36,27 +36,42 @@ var rootCmd = &cobra.Command{
 	Long:  "Stack is a local-first backend health scanner for environment, secrets, Docker, CI/CD, Kubernetes, Redis, PostgreSQL, and custom plugin checks.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			return output.RunShell(func(shellArgs []string) error {
+			return output.RunWorkbench(func(shellArgs []string) string {
+				if len(shellArgs) == 0 {
+					return ""
+				}
+
 				subCmd, subArgs, err := cmd.Find(shellArgs)
 				if err != nil {
-					return err
+					return fmt.Sprintf("Error: %v\n", err)
 				}
 				
 				if subCmd.Name() == "stack" && len(shellArgs) > 0 {
-					return fmt.Errorf("unknown command: %s", shellArgs[0])
+					return fmt.Sprintf("Error: unknown command %q\n", shellArgs[0])
 				}
+				
+				// Capture output
+				var buf strings.Builder
+				subCmd.SetOut(&buf)
+				subCmd.SetErr(&buf)
 				
 				// Reset flags for each run
 				subCmd.Flags().Parse(subArgs)
 				
+				var cmdErr error
 				if subCmd.RunE != nil {
-					return subCmd.RunE(subCmd, subArgs)
-				}
-				if subCmd.Run != nil {
+					cmdErr = subCmd.RunE(subCmd, subArgs)
+				} else if subCmd.Run != nil {
 					subCmd.Run(subCmd, subArgs)
-					return nil
+				} else {
+					cmdErr = subCmd.Help()
 				}
-				return subCmd.Help()
+
+				if cmdErr != nil {
+					return fmt.Sprintf("Error: %v\n", cmdErr)
+				}
+				
+				return buf.String()
 			})
 		}
 		return cmd.Help()

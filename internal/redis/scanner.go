@@ -127,7 +127,10 @@ func scanCompose(path string, data []byte) []scanner.Finding {
 	services, _ := raw["services"].(map[string]interface{})
 	findings := []scanner.Finding{}
 	for name, entry := range services {
-		service, _ := entry.(map[string]interface{})
+		service, ok := entry.(map[string]interface{})
+		if !ok || service == nil {
+			continue
+		}
 		image := strings.ToLower(stringValue(service["image"]))
 		if !strings.HasPrefix(image, "redis") && !strings.Contains(image, "/redis") {
 			continue
