@@ -44,6 +44,10 @@ var rootCmd = &cobra.Command{
 					return ""
 				}
 
+				if len(shellArgs) == 1 && (shellArgs[0] == "cls" || shellArgs[0] == "clear") {
+					return "__CLEAR__"
+				}
+
 				subCmd, subArgs, err := cmd.Find(shellArgs)
 				if err != nil {
 					return fmt.Sprintf("Error: %v\n", err)

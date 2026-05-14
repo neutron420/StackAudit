@@ -116,6 +116,13 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.output.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#6272A4")).Render(fmt.Sprintf("\n> %s\n", input)))
 				args := strings.Fields(input)
 				res := m.execute(args)
+				if res == "__CLEAR__" {
+					m.output.Reset()
+					m.viewport.SetContent("Screen cleared. Type a command to begin.")
+					m.viewport.GotoTop()
+					m.textInput.Reset()
+					return m, nil
+				}
 				m.output.WriteString(res)
 				m.viewport.SetContent(m.output.String())
 				m.viewport.GotoBottom()
