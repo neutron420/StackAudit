@@ -1,6 +1,10 @@
 $repo = "neutron420/StackAudit"
 $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/latest"
-$asset = $release.assets | Where-Object { $_.name -like "*Windows_x86_64.zip" }
+$asset = $release.assets | Where-Object { $_.name -match "windows" -and $_.name -match "amd64" -and $_.name -like "*.zip" }
+if (!$asset) {
+    Write-Host "Error: Could not find Windows release asset. The build might still be in progress on GitHub." -ForegroundColor Red
+    exit
+}
 $url = $asset.browser_download_url
 $dest = "$HOME\stack.zip"
 $binDir = "$HOME\.stack\bin"
