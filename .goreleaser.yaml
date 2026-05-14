@@ -3,8 +3,8 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - main: ./cmd/StackAudit
-    binary: StackAudit
+  - main: ./cmd/stackaudit
+    binary: stackaudit
     env:
       - CGO_ENABLED=0
     goos:
