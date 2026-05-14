@@ -16,14 +16,14 @@ import (
 
 // sandboxModel is the core of our k9s-style interactive shell
 type sandboxModel struct {
-	viewport    viewport.Model
-	textInput   textinput.Model
-	ready       bool
-	output      *strings.Builder // Using a pointer to avoid "copy by value" panics
-	execute     func(args []string) string
-	width       int
-	height      int
-	stats       string
+	viewport  viewport.Model
+	textInput textinput.Model
+	ready     bool
+	output    *strings.Builder
+	execute   func(args []string) string
+	width     int
+	height    int
+	stats     string
 }
 
 type statsMsg string
@@ -36,17 +36,17 @@ func pollStats() tea.Cmd {
 
 func RunSandbox(execute func(args []string) string) error {
 	ti := textinput.New()
-	ti.Placeholder = "Type a command (scan, doctor, env...)"
+	ti.Placeholder = "Type a command (scan, ci, env, docker...)"
 	ti.Focus()
 	ti.CharLimit = 156
-	ti.Width = 40
+	ti.Width = 50
 	ti.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9")).Bold(true).Render("stack > ")
 
 	m := sandboxModel{
 		textInput: ti,
 		execute:   execute,
 		output:    &strings.Builder{},
-		stats:     "Initializing stats...",
+		stats:     "Polling system metrics...",
 	}
 
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
@@ -67,9 +67,10 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case statsMsg:
 		m.stats = string(msg)
-		return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
+		return m, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
 			return pollStats()()
 		})
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+up", "ctrl+k", "shift+up":
@@ -106,7 +107,7 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			if input == "copy" {
 				os.WriteFile("stack_output.txt", []byte(m.output.String()), 0644)
-				m.output.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Render("\n[SYSTEM] Output saved to stack_output.txt 📄\n"))
+				m.output.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Render("\n[SYSTEM] Output saved to stack_output.txt\n"))
 				m.viewport.SetContent(m.output.String())
 				m.viewport.GotoBottom()
 				m.textInput.Reset()
@@ -134,14 +135,19 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 
+		// Header = 10 lines, input = 1, footer = 3, borders = 2
+		vpHeight := msg.Height - 16
+		if vpHeight < 4 {
+			vpHeight = 4
+		}
+
 		if !m.ready {
-			m.viewport = viewport.New(msg.Width, msg.Height-18)
-			m.viewport.YPosition = 14
-			m.viewport.SetContent("Welcome to the STACK Sandbox. Type a command to begin.")
+			m.viewport = viewport.New(msg.Width-4, vpHeight)
+			m.viewport.SetContent("Welcome to the STACK Workbench. Type a command to begin.\n\nAvailable: scan, scan <module>, ci, env, docker, secrets, redis, k8s, postgres\n           help, copy, clear, quit")
 			m.ready = true
 		} else {
-			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - 18
+			m.viewport.Width = msg.Width - 4
+			m.viewport.Height = vpHeight
 		}
 	}
 
@@ -153,61 +159,60 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m sandboxModel) View() string {
 	if !m.ready {
-		return "Initializing..."
+		return "\n  Initializing..."
 	}
 
-	// 🏔️ TOP HEADER (Centered & Clean)
-	logoStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9")).Bold(true)
-	logo := logoStyle.Render(`_____ _______       _____ _  __
-/ ____|__   __|/\   / ____| |/ /
-| (___    | |  /  \ | |    | ' / 
- \___ \   | | / /\ \| |    |  <  
- ____) |  | |/ ____ \ |____| . \ 
-|_____/   |_/_/    \_\_____|_|\_\`)
+	// --- STYLES ---
+	purple := lipgloss.Color("#BD93F9")
+	muted := lipgloss.Color("#6272A4")
+	cyan := lipgloss.Color("#8BE9FD")
 
-	missionText := lipgloss.NewStyle().Foreground(lipgloss.Color("#9499B0")).Render("The Local-First Backend Health & Security Audit Tool")
-	statsLine := lipgloss.NewStyle().Foreground(lipgloss.Color("#8BE9FD")).Render(m.stats)
+	centerStyle := lipgloss.NewStyle().Width(m.width).Align(lipgloss.Center)
 
-	// Combine header elements
-	headerContent := lipgloss.JoinVertical(lipgloss.Center,
-		"\n",
-		logo,
-		missionText,
-		statsLine,
-		"\n",
+	// --- LOGO ---
+	logo := lipgloss.NewStyle().Foreground(purple).Bold(true).Render(
+		" _____ _______       _____ _  __\n" +
+			"/ ____|__   __|/\\   / ____| |/ /\n" +
+			"| (___    | |  /  \\ | |    | ' / \n" +
+			" \\___ \\   | | / /\\ \\| |    |  <  \n" +
+			" ____) |  | |/ ____ \\ |____| . \\ \n" +
+			"|_____/   |_/_/    \\_\\_____|_|\\_\\")
+
+	// --- MISSION ---
+	mission := lipgloss.NewStyle().Foreground(muted).Render("The Local-First Backend Health & Security Audit Tool")
+
+	// --- STATS ---
+	stats := lipgloss.NewStyle().Foreground(cyan).Render(m.stats)
+
+	// --- HEADER BLOCK (centered) ---
+	header := lipgloss.JoinVertical(lipgloss.Center,
+		"",
+		centerStyle.Render(logo),
+		centerStyle.Render(mission),
+		centerStyle.Render(stats),
 	)
-	
-	header := centerText(headerContent, m.width)
 
-	// 📊 VIEWPORT & INPUT
-	footer := fmt.Sprintf("\n%s\n%s", 
-		centerText(lipgloss.NewStyle().Foreground(lipgloss.Color("#6272A4")).Render("Ctrl Up/Down Scroll • 'copy' Export • Esc/q Quit"), m.width),
-		centerText(lipgloss.NewStyle().Foreground(lipgloss.Color("#6272A4")).Render("Modules: env, docker, secrets, redis, k8s, cicd, postgres"), m.width),
-	)
+	// --- VIEWPORT with border ---
+	vpBorder := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder(), true, false).
+		BorderForeground(muted).
+		Width(m.width - 2).
+		Render(m.viewport.View())
+
+	// --- INPUT ---
+	inputBar := lipgloss.NewStyle().PaddingLeft(1).Render(m.textInput.View())
+
+	// --- FOOTER ---
+	footer := centerStyle.Foreground(muted).Render(
+		"Ctrl+Up/Down Scroll  |  'copy' Export  |  'clear' Reset  |  Esc/q Quit\n" +
+			"Modules: env, docker, secrets, redis, k8s, cicd, postgres")
 
 	return lipgloss.JoinVertical(lipgloss.Left,
 		header,
-		m.viewport.View(),
-		m.textInput.View(),
+		vpBorder,
+		inputBar,
 		footer,
 	)
-}
-
-func centerText(str string, width int) string {
-	lines := strings.Split(str, "\n")
-	var centered []string
-	for _, line := range lines {
-		contentWidth := lipgloss.Width(line)
-		padding := (width - contentWidth) / 2
-		if padding < 0 { padding = 0 }
-		centered = append(centered, strings.Repeat(" ", padding)+line)
-	}
-	return strings.Join(centered, "\n")
-}
-
-func max(a, b int) int {
-	if a > b { return a }
-	return b
 }
 
 func getLiveStats() string {
@@ -223,7 +228,7 @@ func getLiveStats() string {
 		cmdText := "(Get-CimInstance Win32_Processor).LoadPercentage; [math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB, 2)"
 		cmd := exec.Command("powershell", "-NoProfile", "-Command", cmdText)
 		out, _ := cmd.Output()
-		
+
 		raw := string(out)
 		lines := strings.Split(raw, "\n")
 		var valid []string
@@ -233,38 +238,46 @@ func getLiveStats() string {
 				valid = append(valid, t)
 			}
 		}
-		
+
 		if len(valid) >= 2 {
 			cpuStr = valid[0] + "%"
 			memStr = valid[1] + " GB FREE"
 		}
 
 	case "linux":
-		// Simple CPU load from /proc/loadavg
 		cpuOut, _ := os.ReadFile("/proc/loadavg")
-		cpuStr = strings.Fields(string(cpuOut))[0] // 1 min load
+		fields := strings.Fields(string(cpuOut))
+		if len(fields) > 0 {
+			cpuStr = fields[0]
+		}
 
-		// Simple Memory from /proc/meminfo
 		memOut, _ := exec.Command("free", "-m").Output()
 		lines := strings.Split(string(memOut), "\n")
 		if len(lines) > 1 {
-			fields := strings.Fields(lines[1])
-			if len(fields) > 3 {
-				memStr = fields[3] + " MB Free"
+			memFields := strings.Fields(lines[1])
+			if len(memFields) > 3 {
+				memStr = memFields[3] + " MB Free"
 			}
 		}
 
-	case "darwin": // macOS
+	case "darwin":
 		cpuOut, _ := exec.Command("sysctl", "-n", "vm.loadavg").Output()
-		cpuStr = strings.Fields(string(cpuOut))[1] // 1 min load
+		fields := strings.Fields(string(cpuOut))
+		if len(fields) > 1 {
+			cpuStr = fields[1]
+		}
 
 		memOut, _ := exec.Command("sysctl", "-n", "hw.memsize").Output()
-		memStr = strings.TrimSpace(string(memOut)) // Simplified
+		memStr = strings.TrimSpace(string(memOut))
 	}
 
-	if cpuStr == "" { cpuStr = "0" }
-	if memStr == "" { memStr = "N/A" }
+	if cpuStr == "" {
+		cpuStr = "N/A"
+	}
+	if memStr == "" {
+		memStr = "N/A"
+	}
 
-	return fmt.Sprintf("HOST: %s | OS: %s | CPU: %s | MEM: %s", 
+	return fmt.Sprintf("HOST: %s  |  OS: %s  |  CPU: %s  |  MEM: %s",
 		strings.ToUpper(host), strings.ToUpper(runtime.GOOS), cpuStr, memStr)
 }

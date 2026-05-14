@@ -46,7 +46,7 @@ func runDockerScan(ctx context.Context) error {
 		return err
 	}
 
-	formatted, err := output.Render(report, mode, true)
+	formatted, err := output.Render(report, mode, !cfg.NoTUI)
 	if err != nil {
 		return err
 	}

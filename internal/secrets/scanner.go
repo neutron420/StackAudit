@@ -64,6 +64,15 @@ func (s *Scanner) Scan(ctx context.Context, root string, ruleSet rules.RuleSet) 
 		findings = append(findings, matchHighEntropy(file, content)...)
 	}
 
+	if len(findings) == 0 {
+		findings = append(findings, scanner.Finding{
+			Category:    "secrets",
+			Title:       "No secrets issues detected",
+			Description: "No hardcoded secrets, API keys, or high-entropy strings were found in your codebase.",
+			Severity:    scanner.SeveritySuccess,
+		})
+	}
+
 	return findings, nil
 }
 

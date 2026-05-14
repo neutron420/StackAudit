@@ -42,7 +42,7 @@ func runRedisScan(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	formatted, err := output.Render(report, mode, true)
+	formatted, err := output.Render(report, mode, !cfg.NoTUI)
 	if err != nil {
 		return err
 	}

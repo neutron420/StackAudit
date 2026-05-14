@@ -24,18 +24,25 @@ func (s *Scanner) Name() string {
 }
 
 func (s *Scanner) Scan(ctx context.Context, root string, ruleSet rules.RuleSet) ([]scanner.Finding, error) {
+	noCI := scanner.Finding{
+		Category:    "cicd",
+		Title:       "No CI/CD pipelines found",
+		Description: "We couldn't find any GitHub Actions workflows (.github/workflows) in your project.",
+		Severity:    scanner.SeverityInfo,
+	}
+
 	workflows := filepath.Join(root, ".github", "workflows")
 	ignore, err := utils.LoadIgnoreMatcher(root)
 	if err != nil {
 		return nil, err
 	}
 	if ignore != nil && ignore(workflows, true) {
-		return nil, nil
+		return []scanner.Finding{noCI}, nil
 	}
 	entries, err := os.ReadDir(workflows)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil
+			return []scanner.Finding{noCI}, nil
 		}
 		return nil, err
 	}
@@ -58,6 +65,10 @@ func (s *Scanner) Scan(ctx context.Context, root string, ruleSet rules.RuleSet) 
 			return nil, err
 		}
 		findings = append(findings, scanWorkflow(path, data)...)
+	}
+
+	if len(findings) == 0 {
+		findings = append(findings, noCI)
 	}
 
 	return findings, nil
