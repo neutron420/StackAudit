@@ -7,32 +7,60 @@ import (
 	"time"
 
 	"devdoctor/internal/scanner"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 func renderTable(report scanner.Report) string {
-	builder := &strings.Builder{}
-	head := "DevDoctor"
-	line := "──────────────────────────────"
-	fmt.Fprintf(builder, "╭%s╮\n", line)
-	fmt.Fprintf(builder, "│%s│\n", center(head, len(line)))
-	fmt.Fprintf(builder, "│%s│\n", center("Backend Health Scanner", len(line)))
-	fmt.Fprintf(builder, "╰%s╯\n\n", line)
+	var b strings.Builder
 
-	fmt.Fprintln(builder, styleMuted.Render("Local-only scan. No telemetry. No network calls. Secrets never leave your machine."))
-	fmt.Fprintln(builder, "")
+	// Header Box
+	headerStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(styleBranding.GetForeground()).
+		Padding(0, 2).
+		Align(lipgloss.Center).
+		Width(40)
 
-	fmt.Fprintf(builder, "%s %d/100\n", styleHeader.Render("Project Health Score:"), report.Scores.Overall)
-	fmt.Fprintf(builder, "%s %d/100\n", styleHeader.Render("Security:"), report.Scores.Security)
-	fmt.Fprintf(builder, "%s %d/100\n", styleHeader.Render("Infrastructure:"), report.Scores.Infrastructure)
-	fmt.Fprintf(builder, "%s %d/100\n\n", styleHeader.Render("Configuration:"), report.Scores.Configuration)
+	headerContent := lipgloss.JoinVertical(lipgloss.Center,
+		styleBranding.Render("StackAudit"),
+		styleMuted.Render("Production Health Scanner"),
+	)
+	fmt.Fprintln(&b, headerStyle.Render(headerContent))
 
-	fmt.Fprintf(builder, "%s %d  %s %d  %s %d  %s %d\n\n",
+	fmt.Fprintln(&b, styleMuted.Render(" Local-only scan • Secrets stay on your machine"))
+	fmt.Fprintln(&b, "")
+
+	// Score Rendering
+	renderScore := func(label string, score int) string {
+		var scoreStyle lipgloss.Style
+		if score >= 90 {
+			scoreStyle = styleSuccess
+		} else if score >= 70 {
+			scoreStyle = styleWarning
+		} else {
+			scoreStyle = styleCritical
+		}
+		return fmt.Sprintf("%-22s %s", styleHeader.Render(label), scoreStyle.Render(fmt.Sprintf("%d/100", score)))
+	}
+
+	fmt.Fprintln(&b, renderScore("Project Health:", report.Scores.Overall))
+	fmt.Fprintln(&b, renderScore("Security:", report.Scores.Security))
+	fmt.Fprintln(&b, renderScore("Infrastructure:", report.Scores.Infrastructure))
+	fmt.Fprintln(&b, renderScore("Configuration:", report.Scores.Configuration))
+	fmt.Fprintln(&b, "")
+
+	// Summary Bar
+	summary := fmt.Sprintf("%s %d  %s %d  %s %d  %s %d",
 		styleCritical.Render("Critical"), report.Summary.Critical,
 		styleWarning.Render("Warning"), report.Summary.Warning,
 		styleInfo.Render("Info"), report.Summary.Info,
 		styleSuccess.Render("Success"), report.Summary.Success,
 	)
+	fmt.Fprintln(&b, summary)
+	fmt.Fprintln(&b, "")
 
+	// Findings
 	grouped := groupBySeverity(report.Findings)
 	order := []scanner.Severity{scanner.SeverityCritical, scanner.SeverityWarning, scanner.SeverityInfo, scanner.SeveritySuccess}
 	for _, severity := range order {
@@ -40,28 +68,28 @@ func renderTable(report scanner.Report) string {
 		if len(findings) == 0 {
 			continue
 		}
-		fmt.Fprintf(builder, "%s\n", severityHeader(severity))
+		fmt.Fprintf(&b, "%s\n", severityHeader(severity))
 		for _, finding := range findings {
-			fmt.Fprintf(builder, "  %s %s\n", severityIcon(string(finding.Severity)), finding.Title)
+			fmt.Fprintf(&b, "  %s %s\n", severityIcon(string(finding.Severity)), finding.Title)
 			if finding.Description != "" {
-				fmt.Fprintf(builder, "    %s\n", styleMuted.Render(finding.Description))
+				fmt.Fprintf(&b, "    %s\n", styleMuted.Render(finding.Description))
 			}
 			if finding.Remediation != "" {
-				fmt.Fprintf(builder, "    %s %s\n", styleHeader.Render("Fix:"), styleMuted.Render(finding.Remediation))
+				fmt.Fprintf(&b, "    %s %s\n", styleHeader.Render("Fix:"), styleMuted.Render(finding.Remediation))
 			}
 			if finding.File != "" {
 				location := finding.File
 				if finding.Line > 0 {
 					location = fmt.Sprintf("%s:%d", finding.File, finding.Line)
 				}
-				fmt.Fprintf(builder, "    %s\n", styleMuted.Render(location))
+				fmt.Fprintf(&b, "    %s\n", styleMuted.Render(location))
 			}
 		}
-		fmt.Fprintln(builder, "")
+		fmt.Fprintln(&b, "")
 	}
 
-	fmt.Fprintf(builder, "%s %s\n", styleMuted.Render("Scan completed in"), styleMuted.Render(report.Meta.Duration.Round(time.Millisecond).String()))
-	return builder.String()
+	fmt.Fprintf(&b, "%s %s\n", styleMuted.Render("Audit completed in"), styleMuted.Render(report.Meta.Duration.Round(time.Millisecond).String()))
+	return b.String()
 }
 
 func groupBySeverity(findings []scanner.Finding) map[scanner.Severity][]scanner.Finding {

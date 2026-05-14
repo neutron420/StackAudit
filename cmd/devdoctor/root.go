@@ -25,6 +25,7 @@ type appConfig struct {
 	UpdateBaseline bool
 	ModuleTimeouts []string
 	PluginPaths    []string
+	Modules        []string
 }
 
 var cfg appConfig
@@ -48,7 +49,16 @@ func Execute() {
 func init() {
 	rootCmd.Version = version.FullVersion()
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		return applyConfigFile(cmd)
+		err := applyConfigFile(cmd)
+		if err != nil {
+			return err
+		}
+
+		// Only print banner for human-readable table output and if TUI is enabled
+		if cfg.OutputMode == string(output.ModeTable) && !cfg.NoTUI && cmd.Name() != "version" {
+			output.PrintBanner()
+		}
+		return nil
 	}
 	rootCmd.PersistentFlags().StringVarP(&cfg.RootPath, "path", "p", ".", "Project root path")
 	rootCmd.PersistentFlags().StringVar(&cfg.ConfigPath, "config", ".devdoctor.yaml", "Path to DevDoctor config file")
@@ -62,6 +72,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&cfg.UpdateBaseline, "update-baseline", false, "Write a baseline file from the current scan")
 	rootCmd.PersistentFlags().StringSliceVar(&cfg.ModuleTimeouts, "module-timeout", nil, "Module timeout budget: duration for all modules or module=duration (e.g. 2s, env=500ms,secrets=5s)")
 	rootCmd.PersistentFlags().StringSliceVar(&cfg.PluginPaths, "plugin", nil, "Custom scanner plugin YAML path (repeatable)")
+	rootCmd.PersistentFlags().StringSliceVar(&cfg.Modules, "module", nil, "Specific modules to run (repeatable, e.g. env,docker)")
 
 	rootCmd.AddCommand(scanCmd)
 	rootCmd.AddCommand(envCmd)

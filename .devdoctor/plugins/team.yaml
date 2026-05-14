@@ -1,0 +1,17 @@
+name: "team-standards"
+rules:
+  - id: "todo_check"
+    title: "Unresolved TODO found"
+    description: "Ensure all TODOs are tracked in the task management system before merging."
+    severity: "info"
+    category: "quality"
+    contains: "TODO:"
+  - id: "no_console_log"
+    title: "Console log found in production code"
+    description: "Remove console.log statements before deploying to production."
+    severity: "warning"
+    category: "quality"
+    regex: "console\\.log\\("
+    paths:
+      - "**/*.js"
+      - "**/*.ts"

@@ -28,7 +28,8 @@ func RunScanSpinner(title string, runner func() (scanner.Report, error)) (scanne
 		title:   title,
 		runner:  runner,
 	}
-	m.spinner.Spinner = spinner.Dot
+	m.spinner.Spinner = spinner.Pulse
+	m.spinner.Style = styleBranding
 
 	p := tea.NewProgram(m, tea.WithoutSignals())
 	final, err := p.Run()
@@ -67,5 +68,8 @@ func (m scanModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m scanModel) View() string {
-	return fmt.Sprintf("%s %s\n", m.spinner.View(), m.title)
+	if m.err != nil || m.report.Findings != nil {
+		return ""
+	}
+	return fmt.Sprintf("\n %s %s %s\n", m.spinner.View(), styleHeader.Render(m.title), styleMuted.Render("... this may take a few seconds"))
 }

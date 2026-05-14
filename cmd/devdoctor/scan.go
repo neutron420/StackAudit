@@ -42,16 +42,42 @@ func runScan(ctx context.Context) error {
 		return err
 	}
 
-	runner := func() (scanner.Report, error) {
-		modules := []scanner.Module{
-			env.NewScanner(),
-			secrets.NewScanner(),
-			docker.NewScanner(),
-			cicd.NewScanner(),
-			kubernetes.NewScanner(),
-			redis.NewScanner(),
-			postgres.NewScanner(),
+	availableModules := map[string]scanner.Module{
+		"env":        env.NewScanner(),
+		"secrets":    secrets.NewScanner(),
+		"docker":     docker.NewScanner(),
+		"cicd":       cicd.NewScanner(),
+		"kubernetes": kubernetes.NewScanner(),
+		"redis":      redis.NewScanner(),
+		"postgres":   postgres.NewScanner(),
+	}
+
+	selectedNames := cfg.Modules
+	if len(selectedNames) == 0 && mode == output.ModeTable && !cfg.NoTUI {
+		names := []string{}
+		for name := range availableModules {
+			names = append(names, name)
 		}
+		selectedNames, err = output.MultiSelect(names)
+		if err != nil {
+			return err
+		}
+	}
+
+	runner := func() (scanner.Report, error) {
+		modules := []scanner.Module{}
+		if len(selectedNames) > 0 {
+			for _, name := range selectedNames {
+				if m, ok := availableModules[name]; ok {
+					modules = append(modules, m)
+				}
+			}
+		} else {
+			for _, m := range availableModules {
+				modules = append(modules, m)
+			}
+		}
+
 		customModules, err := custom.NewScanners(cfg.RootPath, cfg.PluginPaths)
 		if err != nil {
 			return scanner.Report{}, err
