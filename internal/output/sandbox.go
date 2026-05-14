@@ -58,6 +58,16 @@ func (m sandboxModel) Init() tea.Cmd {
 	return tea.Batch(textinput.Blink, pollStats())
 }
 
+type executeMsg struct {
+	content string
+}
+
+func (m sandboxModel) runCommand(args []string) tea.Cmd {
+	return func() tea.Msg {
+		return executeMsg{content: m.execute(args)}
+	}
+}
+
 func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
 		tiCmd tea.Cmd
@@ -65,6 +75,18 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	)
 
 	switch msg := msg.(type) {
+	case executeMsg:
+		if msg.content == "__CLEAR__" {
+			m.output.Reset()
+			m.viewport.SetContent("Screen cleared. Type a command to begin.")
+			m.viewport.GotoTop()
+		} else {
+			m.output.WriteString(msg.content)
+			m.viewport.SetContent(m.output.String())
+			m.viewport.GotoBottom()
+		}
+		return m, nil
+
 	case statsMsg:
 		m.stats = string(msg)
 		return m, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
@@ -115,19 +137,12 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			if input != "" {
 				m.output.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#6272A4")).Render(fmt.Sprintf("\n> %s\n", input)))
-				args := strings.Fields(input)
-				res := m.execute(args)
-				if res == "__CLEAR__" {
-					m.output.Reset()
-					m.viewport.SetContent("Screen cleared. Type a command to begin.")
-					m.viewport.GotoTop()
-					m.textInput.Reset()
-					return m, nil
-				}
-				m.output.WriteString(res)
-				m.viewport.SetContent(m.output.String())
+				m.viewport.SetContent(m.output.String() + "\nRunning...")
 				m.viewport.GotoBottom()
+				
+				args := strings.Fields(input)
 				m.textInput.Reset()
+				return m, m.runCommand(args)
 			}
 		}
 

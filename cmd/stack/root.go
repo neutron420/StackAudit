@@ -10,6 +10,7 @@ import (
 	"stack/pkg/version"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 type appConfig struct {
@@ -65,7 +66,16 @@ var rootCmd = &cobra.Command{
 				// Set context, reset flags, and DISABLE TUI for sub-execution
 				// (Running a TUI inside a TUI causes memory corruption)
 				subCmd.SetContext(cmd.Context())
-				subCmd.Flags().Parse(subArgs)
+				
+				// Reset flags for subsequent runs
+				subCmd.Flags().VisitAll(func(f *pflag.Flag) {
+					f.Value.Set(f.DefValue)
+					f.Changed = false
+				})
+
+				if err := subCmd.Flags().Parse(subArgs); err != nil {
+					return fmt.Sprintf("Error parsing flags: %v\n", err)
+				}
 				
 				oldNoTUI := cfg.NoTUI
 				cfg.NoTUI = true
