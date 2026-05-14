@@ -10,7 +10,7 @@ console.log("Installing StackAudit binary...");
 
 try {
   if (process.platform === 'win32') {
-    execSync(`powershell -NoProfile -Command "iwr https://raw.githubusercontent.com/${repo}/main/scripts/install.ps1 | iex"`, { stdio: 'inherit' });
+    execSync(`powershell -NoProfile -Command "iwr -UseBasicParsing https://raw.githubusercontent.com/${repo}/main/scripts/install.ps1 | iex"`, { stdio: 'inherit' });
     const installedBin = path.join(process.env.USERPROFILE, '.stack', 'bin', 'stack.exe');
     if (fs.existsSync(installedBin)) {
         fs.copyFileSync(installedBin, path.join(binDir, 'stack.exe'));
