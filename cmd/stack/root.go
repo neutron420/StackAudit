@@ -35,28 +35,31 @@ var rootCmd = &cobra.Command{
 	Short: "Stack scans backend projects for production health issues",
 	Long:  "Stack is a local-first backend health scanner for environment, secrets, Docker, CI/CD, Kubernetes, Redis, PostgreSQL, and custom plugin checks.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		choice, err := output.RunSandbox()
-		if err != nil {
-			return err
+		if len(args) == 0 {
+			return output.RunShell(func(shellArgs []string) error {
+				subCmd, subArgs, err := cmd.Find(shellArgs)
+				if err != nil {
+					return err
+				}
+				
+				if subCmd.Name() == "stack" && len(shellArgs) > 0 {
+					return fmt.Errorf("unknown command: %s", shellArgs[0])
+				}
+				
+				// Reset flags for each run
+				subCmd.Flags().Parse(subArgs)
+				
+				if subCmd.RunE != nil {
+					return subCmd.RunE(subCmd, subArgs)
+				}
+				if subCmd.Run != nil {
+					subCmd.Run(subCmd, subArgs)
+					return nil
+				}
+				return subCmd.Help()
+			})
 		}
-
-		switch choice {
-		case "Full Health Scan":
-			return scanCmd.RunE(cmd, nil)
-		case "🩺 Environment Doctor":
-			return doctorCmd.RunE(cmd, nil)
-		case "🛠️  Interactive Fixer":
-			return fixCmd.RunE(cmd, nil)
-		case "🧪 Create Demo Project":
-			return initDemoCmd.RunE(cmd, nil)
-		case "📈 View Last Report":
-			fmt.Println("Opening last report...")
-			return nil
-		case "🚪 EXIT SANDBOX", "":
-			fmt.Println("Goodbye!")
-			return nil
-		}
-		return nil
+		return cmd.Help()
 	},
 }
 
