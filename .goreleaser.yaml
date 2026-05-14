@@ -1,10 +1,10 @@
-project_name: StackAudit
+project_name: stack
 before:
   hooks:
     - go mod tidy
 builds:
-  - main: ./cmd/stackaudit
-    binary: stackaudit
+  - main: ./cmd/stack
+    binary: stack
     env:
       - CGO_ENABLED=0
     goos:
