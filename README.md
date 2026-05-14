@@ -1,7 +1,7 @@
 # StackAudit
 ### The Local-First Backend Health & Security Audit Tool
 
-[![Go Version](https://img.shields.io/github/go-mod/go-version/neutron420/stack?style=flat-square)](https://go.dev/)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/neutron420/StackAudit?style=flat-square)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
@@ -25,15 +25,18 @@ StackAudit is a high-performance, developer-first CLI tool designed to audit you
 ### Using GitHub (Recommended)
 Download the latest binary for your operating system from the [Releases](https://github.com/neutron420/StackAudit/releases) page.
 
-### One-Line Installers
-**macOS / Linux**
-```bash
-curl -sSL https://raw.githubusercontent.com/neutron420/StackAudit/main/scripts/install.sh | sh
-```
+## Quick Start (One-Command Installation)
 
-**Windows (PowerShell)**
+Get up and running in seconds with our automated installers. These scripts will download the latest version, install it, and configure your system path automatically.
+
+### Windows (PowerShell)
 ```powershell
 iwr https://raw.githubusercontent.com/neutron420/StackAudit/main/scripts/install.ps1 | iex
+```
+
+### macOS / Linux (Bash)
+```bash
+curl -sSL https://raw.githubusercontent.com/neutron420/StackAudit/main/scripts/install.sh | sh
 ```
 
 ### From Source
