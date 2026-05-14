@@ -15,12 +15,13 @@ const (
 	ModeJSON     Mode = "json"
 	ModeMarkdown Mode = "markdown"
 	ModeSARIF    Mode = "sarif"
+	ModeHTML     Mode = "html"
 )
 
 func ParseMode(value string) (Mode, error) {
 	mode := Mode(strings.ToLower(value))
 	switch mode {
-	case ModeTable, ModeJSON, ModeMarkdown, ModeSARIF:
+	case ModeTable, ModeJSON, ModeMarkdown, ModeSARIF, ModeHTML:
 		return mode, nil
 	default:
 		return ModeTable, fmt.Errorf("invalid output mode: %s", value)
@@ -39,6 +40,8 @@ func Render(report scanner.Report, mode Mode) (string, error) {
 		return renderSarif(report)
 	case ModeMarkdown:
 		return renderMarkdown(report), nil
+	case ModeHTML:
+		return renderHTML(report)
 	default:
 		return renderTable(report), nil
 	}

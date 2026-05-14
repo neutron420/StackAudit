@@ -66,6 +66,9 @@ func renderSarif(report scanner.Report) (string, error) {
 		if finding.Description != "" {
 			message = message + " - " + finding.Description
 		}
+		if finding.Remediation != "" {
+			message = message + " Fix: " + finding.Remediation
+		}
 
 		result := sarifResult{
 			RuleID:  sarifRuleID(finding),

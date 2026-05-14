@@ -66,6 +66,7 @@ func Run(ctx context.Context, root string, ruleSet rules.RuleSet, modules []Modu
 	}
 
 	findings = ApplySeverityOverrides(findings, ruleSet.SeverityOverrides)
+	findings = ApplyRemediations(findings)
 	summary := Summarize(findings)
 	healthFindings := make([]health.Finding, 0, len(findings))
 	for _, finding := range findings {

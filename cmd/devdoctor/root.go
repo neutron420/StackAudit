@@ -15,6 +15,7 @@ import (
 type appConfig struct {
 	RootPath       string
 	RulesPath      string
+	ConfigPath     string
 	RulePacks      []string
 	OutputMode     string
 	NoTUI          bool
@@ -46,10 +47,14 @@ func Execute() {
 
 func init() {
 	rootCmd.Version = version.FullVersion()
+	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		return applyConfigFile(cmd)
+	}
 	rootCmd.PersistentFlags().StringVarP(&cfg.RootPath, "path", "p", ".", "Project root path")
+	rootCmd.PersistentFlags().StringVar(&cfg.ConfigPath, "config", ".devdoctor.yaml", "Path to DevDoctor config file")
 	rootCmd.PersistentFlags().StringVar(&cfg.RulesPath, "rules", "", "Path to rules YAML file")
 	rootCmd.PersistentFlags().StringSliceVar(&cfg.RulePacks, "rule-pack", nil, "Rule pack names or YAML paths (repeatable)")
-	rootCmd.PersistentFlags().StringVarP(&cfg.OutputMode, "output", "o", string(output.ModeTable), "Output mode: table|json|markdown|sarif")
+	rootCmd.PersistentFlags().StringVarP(&cfg.OutputMode, "output", "o", string(output.ModeTable), "Output mode: table|json|markdown|sarif|html")
 	rootCmd.PersistentFlags().BoolVar(&cfg.NoTUI, "no-tui", false, "Disable TUI loading indicators")
 	rootCmd.PersistentFlags().BoolVar(&cfg.ExitCode, "exit-code", false, "Return non-zero exit code when findings meet --min-severity")
 	rootCmd.PersistentFlags().StringVar(&cfg.MinSeverity, "min-severity", "warning", "Minimum severity for non-zero exit code: critical|warning|info")
@@ -68,6 +73,7 @@ func init() {
 	rootCmd.AddCommand(postgresCmd)
 	rootCmd.AddCommand(doctorCmd)
 	rootCmd.AddCommand(fixCmd)
+	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(hooksCmd)
 	rootCmd.AddCommand(versionCmd)
 }

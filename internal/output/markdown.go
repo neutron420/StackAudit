@@ -39,6 +39,9 @@ func renderMarkdown(report scanner.Report) string {
 		if finding.Description != "" {
 			fmt.Fprintf(builder, "  - %s\n", finding.Description)
 		}
+		if finding.Remediation != "" {
+			fmt.Fprintf(builder, "  - Fix: %s\n", finding.Remediation)
+		}
 	}
 	return builder.String()
 }

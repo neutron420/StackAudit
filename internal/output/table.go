@@ -46,6 +46,9 @@ func renderTable(report scanner.Report) string {
 			if finding.Description != "" {
 				fmt.Fprintf(builder, "    %s\n", styleMuted.Render(finding.Description))
 			}
+			if finding.Remediation != "" {
+				fmt.Fprintf(builder, "    %s %s\n", styleHeader.Render("Fix:"), styleMuted.Render(finding.Remediation))
+			}
 			if finding.File != "" {
 				location := finding.File
 				if finding.Line > 0 {

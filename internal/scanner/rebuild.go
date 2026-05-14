@@ -3,6 +3,7 @@ package scanner
 import "devdoctor/internal/health"
 
 func Rebuild(report Report) Report {
+	report.Findings = ApplyRemediations(report.Findings)
 	report.Summary = Summarize(report.Findings)
 	healthFindings := make([]health.Finding, 0, len(report.Findings))
 	for _, finding := range report.Findings {

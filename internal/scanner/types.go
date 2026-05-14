@@ -15,6 +15,7 @@ type Finding struct {
 	Severity    Severity `json:"severity"`
 	Title       string   `json:"title"`
 	Description string   `json:"description,omitempty"`
+	Remediation string   `json:"remediation,omitempty"`
 	File        string   `json:"file,omitempty"`
 	Line        int      `json:"line,omitempty"`
 	Category    string   `json:"category,omitempty"`
