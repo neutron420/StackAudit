@@ -1,0 +1,12 @@
+rules:
+  - id: env_localhost
+    severity: warning
+
+  - id: docker_no_user
+    severity: warning
+
+  - id: docker_latest_tag
+    severity: info
+
+  - id: secret_high_entropy
+    severity: info

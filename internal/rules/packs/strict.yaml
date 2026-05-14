@@ -1,0 +1,18 @@
+rules:
+  - id: env_localhost
+    severity: critical
+
+  - id: env_required
+    severity: warning
+
+  - id: docker_no_user
+    severity: critical
+
+  - id: docker_latest_tag
+    severity: warning
+
+  - id: cicd_pull_request_target
+    severity: critical
+
+  - id: secret_high_entropy
+    severity: warning

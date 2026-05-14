@@ -1,0 +1,9 @@
+rules:
+  - env: JWT_SECRET
+    required: true
+
+  - docker:
+      latest_tag: false
+
+  - production:
+      no_localhost: true
