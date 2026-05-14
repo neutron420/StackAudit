@@ -27,7 +27,7 @@ type sandboxModel struct {
 func RunSandbox(execute func([]string) string) error {
 	m := sandboxModel{
 		execute: execute,
-		stats:   getLiveStats(),
+		stats:   "Initializing system diagnostics...",
 	}
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
@@ -47,17 +47,27 @@ func (m sandboxModel) Init() tea.Cmd {
 	m.viewport = viewport.New(80, 20)
 	m.viewport.SetContent("Welcome to the STACK Workbench. Type a command to begin.\n\nAvailable: scan, scan <module>, ci, env, docker, secrets, redis, k8s, postgres\n           help, copy, clear, quit")
 
-	return tea.Batch(textinput.Blink, pollStats())
+	// Start stats polling in background
+	return tea.Batch(textinput.Blink, pollStatsCmd())
 }
 
 type executeMsg struct {
 	content string
 }
 
+type statsMsg string
+
 func (m sandboxModel) runCommand(args []string) tea.Cmd {
 	return func() tea.Msg {
 		return executeMsg{content: m.execute(args)}
 	}
+}
+
+// pollStatsCmd returns a command that polls stats without blocking the UI
+func pollStatsCmd() tea.Cmd {
+	return tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
+		return statsMsg(getLiveStats())
+	})
 }
 
 func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -67,6 +77,10 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	)
 
 	switch msg := msg.(type) {
+	case statsMsg:
+		m.stats = string(msg)
+		return m, pollStatsCmd()
+
 	case executeMsg:
 		if msg.content == "__CLEAR__" {
 			m.output.Reset()
@@ -78,12 +92,6 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport.GotoBottom()
 		}
 		return m, nil
-
-	case statsMsg:
-		m.stats = string(msg)
-		return m, tea.Tick(3*time.Second, func(t time.Time) tea.Msg {
-			return statsMsg(getLiveStats())
-		})
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -174,25 +182,17 @@ func (m sandboxModel) View() string {
 	)
 }
 
-type statsMsg string
-
-func pollStats() tea.Cmd {
-	return func() tea.Msg {
-		return statsMsg(getLiveStats())
-	}
-}
-
 func getLiveStats() string {
 	host, _ := os.Hostname()
 	if len(host) > 15 {
 		host = host[:12] + "..."
 	}
 
-	var cpuStr, memStr, diskStr string
+	var cpuStr, memStr, diskStr string = "---", "---", "---"
 
 	switch runtime.GOOS {
 	case "windows":
-		cmdText := "(Get-CimInstance Win32_Processor).LoadPercentage; [math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB, 2); [math]::Round((Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='C:'\").FreeSpace / 1GB, 1)"
+		cmdText := "$p = Get-CimInstance Win32_Processor; $o = Get-CimInstance Win32_OperatingSystem; $d = Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='C:'\"; $p.LoadPercentage; [math]::Round($o.FreePhysicalMemory / 1MB, 2); [math]::Round($d.FreeSpace / 1GB, 1)"
 		cmd := exec.Command("powershell", "-NoProfile", "-Command", cmdText)
 		out, _ := cmd.Output()
 
@@ -237,16 +237,6 @@ func getLiveStats() string {
 		diskCmd := exec.Command("sh", "-c", "df -h / | tail -1 | awk '{print $4\" FREE\"}'")
 		diskOut, _ := diskCmd.Output()
 		diskStr = strings.TrimSpace(string(diskOut))
-	}
-
-	if cpuStr == "" {
-		cpuStr = "N/A"
-	}
-	if memStr == "" {
-		memStr = "N/A"
-	}
-	if diskStr == "" {
-		diskStr = "N/A"
 	}
 
 	return fmt.Sprintf("HOST: %s  |  OS: %s  |  CPU: %s  |  MEM: %s  |  DISK: %s",
