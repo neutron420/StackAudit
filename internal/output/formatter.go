@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"stackaudit/internal/scanner"
+	"stack/internal/scanner"
 )
 
 type Mode string

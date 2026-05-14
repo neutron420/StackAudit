@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"stackaudit/internal/scanner"
+	"stack/internal/scanner"
 )
 
 func scanOptions() (scanner.Options, error) {

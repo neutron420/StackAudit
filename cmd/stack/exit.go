@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"stackaudit/internal/scanner"
+	"stack/internal/scanner"
 )
 
 func applyExitCode(report scanner.Report) error {

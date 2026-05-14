@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"strings"
 
-	"stackaudit/internal/rules"
-	"stackaudit/internal/scanner"
-	"stackaudit/internal/utils"
+	"stack/internal/rules"
+	"stack/internal/scanner"
+	"stack/internal/utils"
 )
 
 var (

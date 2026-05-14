@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"stackaudit/internal/fix"
+	"stack/internal/fix"
 )
 
 func RenderFixPlan(plan fix.Plan) string {

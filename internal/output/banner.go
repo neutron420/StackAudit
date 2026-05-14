@@ -18,7 +18,7 @@ const bannerText = `
 
 func PrintBanner() {
 	if os.Getenv("TERM") == "dumb" {
-		fmt.Println("StackAudit - Production Health & Security Audit Tool")
+		fmt.Println("stack - Production Health & Security Audit Tool")
 		return
 	}
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"stackaudit/internal/rules"
+	"stack/internal/rules"
 )
 
 type moduleResult struct {

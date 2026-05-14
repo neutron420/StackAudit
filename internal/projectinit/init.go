@@ -12,22 +12,41 @@ type Options struct {
 
 func WriteStarter(root string, opts Options) ([]string, error) {
 	files := map[string]string{
-		".StackAudit.yaml":  starterConfig,
-		".StackAuditignore": starterIgnore,
-		filepath.Join(".StackAudit", "plugins", "team.yaml"): starterPlugin,
+		".stack.yaml":  starterConfig,
+		".stackignore": starterIgnore,
+		filepath.Join(".stack", "plugins", "team.yaml"): starterPlugin,
 	}
 	return writeFiles(root, files, opts)
 }
 
 func WriteGitHubActions(root string, opts Options) ([]string, error) {
 	return writeFiles(root, map[string]string{
-		filepath.Join(".github", "workflows", "StackAudit.yml"): githubActionsWorkflow,
+		filepath.Join(".github", "workflows", "stack.yml"): githubActionsWorkflow,
 	}, opts)
 }
 
 func WriteEmptyBaseline(root string, opts Options) ([]string, error) {
 	return writeFiles(root, map[string]string{
-		".StackAudit.baseline.json": "{\n  \"version\": 1,\n  \"entries\": [],\n  \"root_hint\": \".\"\n}\n",
+		".stack.baseline.json": "{\n  \"version\": 1,\n  \"entries\": [],\n  \"root_hint\": \".\"\n}\n",
+	}, opts)
+}
+
+func WriteDemo(root string, opts Options) ([]string, error) {
+	return writeFiles(root, map[string]string{
+		"Dockerfile": `FROM node:latest
+# INSECURE: Running as root
+COPY . .
+ENV API_KEY="sk_test_12345"
+CMD ["npm", "start"]`,
+		".env": `DB_PASSWORD=password123
+DEBUG=true
+STRIPE_KEY=pk_live_ABCDEF`,
+		"docker-compose.yml": `version: '3'
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"`,
 	}, opts)
 }
 
@@ -59,7 +78,7 @@ rule_packs:
 output: table
 exit_code: true
 min_severity: warning
-baseline: .StackAudit.baseline.json
+baseline: .stack.baseline.json
 module_timeouts:
   - env=1s
   - secrets=5s
@@ -69,7 +88,7 @@ module_timeouts:
   - redis=2s
   - postgres=2s
 plugins:
-  - .stackaudit/plugins/team.yaml
+  - .stack/plugins/team.yaml
 `
 
 const starterIgnore = `node_modules/
@@ -91,7 +110,7 @@ rules:
     contains: "DEBUG=true"
 `
 
-const githubActionsWorkflow = `name: StackAudit
+const githubActionsWorkflow = `name: stack
 
 on:
   pull_request:
@@ -104,20 +123,20 @@ permissions:
   security-events: write
 
 jobs:
-  StackAudit:
+  stack:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
-      - name: Install StackAudit
-        run: go install ./cmd/StackAudit
-      - name: Run StackAudit
-        run: StackAudit scan --output sarif --exit-code --min-severity warning > StackAudit.sarif
+      - name: Install stack
+        run: go install ./cmd/stack
+      - name: Run stack
+        run: stack scan --output sarif --exit-code --min-severity warning > stack.sarif
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: StackAudit.sarif
+          sarif_file: stack.sarif
 `

@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"stackaudit/internal/baseline"
-	"stackaudit/internal/scanner"
+	"stack/internal/baseline"
+	"stack/internal/scanner"
 )
 
 func applyBaseline(report scanner.Report) (scanner.Report, error) {

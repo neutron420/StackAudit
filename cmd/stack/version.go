@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"stackaudit/pkg/version"
+	"stack/pkg/version"
 
 	"github.com/spf13/cobra"
 )

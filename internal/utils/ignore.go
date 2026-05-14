@@ -16,7 +16,7 @@ type ignoreRule struct {
 }
 
 func LoadIgnoreMatcher(root string) (IgnoreMatcher, error) {
-	ignorePath := filepath.Join(root, ".StackAuditignore")
+	ignorePath := filepath.Join(root, ".stackignore")
 	data, err := os.ReadFile(ignorePath)
 	if err != nil {
 		if os.IsNotExist(err) {

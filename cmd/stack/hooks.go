@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"stackaudit/internal/githooks"
+	"stack/internal/githooks"
 
 	"github.com/spf13/cobra"
 )
@@ -16,35 +16,35 @@ var hookConfig struct {
 
 var hooksCmd = &cobra.Command{
 	Use:   "hooks",
-	Short: "Manage StackAudit git hooks",
+	Short: "Manage stack git hooks",
 }
 
 var hooksInstallCmd = &cobra.Command{
 	Use:   "install",
-	Short: "Install StackAudit pre-commit and pre-push hooks",
+	Short: "Install stack pre-commit and pre-push hooks",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		paths, err := githooks.Install(cfg.RootPath, normalizedHooks(), githooks.Options{Command: hookConfig.Command})
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "Installed StackAudit hook block in %s\n", strings.Join(paths, ", "))
+		fmt.Fprintf(cmd.OutOrStdout(), "Installed stack hook block in %s\n", strings.Join(paths, ", "))
 		return nil
 	},
 }
 
 var hooksUninstallCmd = &cobra.Command{
 	Use:   "uninstall",
-	Short: "Remove StackAudit-managed hook blocks",
+	Short: "Remove stack-managed hook blocks",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		paths, err := githooks.Uninstall(cfg.RootPath, normalizedHooks())
 		if err != nil {
 			return err
 		}
 		if len(paths) == 0 {
-			fmt.Fprintln(cmd.OutOrStdout(), "No StackAudit hook blocks found")
+			fmt.Fprintln(cmd.OutOrStdout(), "No stack hook blocks found")
 			return nil
 		}
-		fmt.Fprintf(cmd.OutOrStdout(), "Removed StackAudit hook block from %s\n", strings.Join(paths, ", "))
+		fmt.Fprintf(cmd.OutOrStdout(), "Removed stack hook block from %s\n", strings.Join(paths, ", "))
 		return nil
 	},
 }

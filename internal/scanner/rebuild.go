@@ -1,6 +1,6 @@
 package scanner
 
-import "stackaudit/internal/health"
+import "stack/internal/health"
 
 func Rebuild(report Report) Report {
 	report.Findings = ApplyRemediations(report.Findings)

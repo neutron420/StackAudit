@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"stackaudit/internal/rules"
+	"stack/internal/rules"
 )
 
 type timedModule struct {

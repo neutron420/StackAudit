@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"strings"
 
-	"stackaudit/internal/rules"
-	"stackaudit/internal/scanner"
-	"stackaudit/internal/utils"
+	"stack/internal/rules"
+	"stack/internal/scanner"
+	"stack/internal/utils"
 
 	"gopkg.in/yaml.v3"
 )
@@ -135,11 +135,11 @@ func resolvePluginPaths(root string, values []string) ([]string, error) {
 		}
 	}
 	if len(paths) == 0 {
-		matches, err := filepath.Glob(filepath.Join(root, ".StackAudit", "plugins", "*.yaml"))
+		matches, err := filepath.Glob(filepath.Join(root, ".stack", "plugins", "*.yaml"))
 		if err != nil {
 			return nil, err
 		}
-		ymlMatches, err := filepath.Glob(filepath.Join(root, ".StackAudit", "plugins", "*.yml"))
+		ymlMatches, err := filepath.Glob(filepath.Join(root, ".stack", "plugins", "*.yml"))
 		if err != nil {
 			return nil, err
 		}

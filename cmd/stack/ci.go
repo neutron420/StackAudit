@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"stackaudit/internal/cicd"
-	"stackaudit/internal/output"
-	"stackaudit/internal/scanner"
+	"stack/internal/cicd"
+	"stack/internal/output"
+	"stack/internal/scanner"
 
 	"github.com/spf13/cobra"
 )

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"stackaudit/internal/scanner"
+	"stack/internal/scanner"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -23,7 +23,7 @@ func renderTable(report scanner.Report) string {
 		Width(40)
 
 	headerContent := lipgloss.JoinVertical(lipgloss.Center,
-		styleBranding.Render("StackAudit"),
+		styleBranding.Render("stack"),
 		styleMuted.Render("Production Health Scanner"),
 	)
 	fmt.Fprintln(&b, headerStyle.Render(headerContent))

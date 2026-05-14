@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"stackaudit/internal/scanner"
+	"stack/internal/scanner"
 )
 
 type sarifLog struct {
@@ -96,7 +96,7 @@ func renderSarif(report scanner.Report) (string, error) {
 		Schema:  "https://json.schemastore.org/sarif-2.1.0.json",
 		Runs: []sarifRun{
 			{
-				Tool:    sarifTool{Driver: sarifDriver{Name: "StackAudit"}},
+				Tool:    sarifTool{Driver: sarifDriver{Name: "stack"}},
 				Results: results,
 			},
 		},
@@ -126,7 +126,7 @@ func sarifRuleID(finding scanner.Finding) string {
 	if finding.RuleID != "" {
 		return finding.RuleID
 	}
-	base := "StackAudit"
+	base := "stack"
 	if finding.Category != "" {
 		base = base + "_" + slugify(finding.Category)
 	}

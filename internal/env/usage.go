@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"stackaudit/internal/utils"
+	"stack/internal/utils"
 )
 
 var (

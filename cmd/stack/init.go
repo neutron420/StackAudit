@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"stackaudit/internal/githooks"
-	"stackaudit/internal/projectinit"
+	"stack/internal/githooks"
+	"stack/internal/projectinit"
 
 	"github.com/spf13/cobra"
 )
@@ -18,7 +18,7 @@ var initConfig struct {
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Create StackAudit starter configuration",
+	Short: "Create stack starter configuration",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		written, err := projectinit.WriteStarter(cfg.RootPath, projectinit.Options{Force: initConfig.Force})
 		if err != nil {
@@ -43,9 +43,23 @@ var initCmd = &cobra.Command{
 	},
 }
 
+var initDemoCmd = &cobra.Command{
+	Use:   "demo",
+	Short: "Create a demo project with sample vulnerabilities for testing",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		written, err := projectinit.WriteDemo(cfg.RootPath, projectinit.Options{Force: initConfig.Force})
+		if err != nil {
+			return err
+		}
+		printInitResult(cmd, written)
+		fmt.Println("\nDemo project created! Run 'stack scan' to see it in action.")
+		return nil
+	},
+}
+
 var initGitHubActionsCmd = &cobra.Command{
 	Use:   "github-actions",
-	Short: "Create a GitHub Actions workflow for StackAudit",
+	Short: "Create a GitHub Actions workflow for stack",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		written, err := projectinit.WriteGitHubActions(cfg.RootPath, projectinit.Options{Force: initConfig.Force})
 		if err != nil {
@@ -58,15 +72,16 @@ var initGitHubActionsCmd = &cobra.Command{
 
 func init() {
 	initCmd.Flags().BoolVar(&initConfig.Force, "force", false, "Overwrite existing starter files")
-	initCmd.Flags().BoolVar(&initConfig.Hooks, "hooks", false, "Install StackAudit pre-commit and pre-push hooks")
+	initCmd.Flags().BoolVar(&initConfig.Hooks, "hooks", false, "Install stack pre-commit and pre-push hooks")
 	initCmd.Flags().BoolVar(&initConfig.Baseline, "baseline", false, "Create an empty baseline file")
 	initGitHubActionsCmd.Flags().BoolVar(&initConfig.Force, "force", false, "Overwrite an existing GitHub Actions workflow")
 	initCmd.AddCommand(initGitHubActionsCmd)
+	initCmd.AddCommand(initDemoCmd)
 }
 
 func printInitResult(cmd *cobra.Command, paths []string) {
 	if len(paths) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "StackAudit starter files already exist")
+		fmt.Fprintln(cmd.OutOrStdout(), "stack starter files already exist")
 		return
 	}
 	fmt.Fprintf(cmd.OutOrStdout(), "Wrote %s\n", strings.Join(paths, ", "))

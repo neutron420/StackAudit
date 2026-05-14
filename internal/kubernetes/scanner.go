@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"stackaudit/internal/rules"
-	"stackaudit/internal/scanner"
-	"stackaudit/internal/utils"
+	"stack/internal/rules"
+	"stack/internal/scanner"
+	"stack/internal/utils"
 
 	"gopkg.in/yaml.v3"
 )

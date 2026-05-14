@@ -8,7 +8,7 @@ import (
 
 func TestWriteStarterSkipsExistingFilesUnlessForced(t *testing.T) {
 	root := t.TempDir()
-	configPath := filepath.Join(root, ".StackAudit.yaml")
+	configPath := filepath.Join(root, ".stack.yaml")
 	if err := os.WriteFile(configPath, []byte("output: json\n"), 0o644); err != nil {
 		t.Fatalf("write existing config: %v", err)
 	}
@@ -43,7 +43,7 @@ func TestWriteGitHubActionsCreatesWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("WriteGitHubActions returned error: %v", err)
 	}
-	workflow := filepath.Join(root, ".github", "workflows", "StackAudit.yml")
+	workflow := filepath.Join(root, ".github", "workflows", "stack.yml")
 	if !containsPath(written, workflow) {
 		t.Fatalf("workflow not reported as written: %v", written)
 	}

@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"testing"
 
-	"stackaudit/internal/rules"
+	"stack/internal/rules"
 )
 
 func TestScanManifestFindsUnsafeWorkloadSettings(t *testing.T) {

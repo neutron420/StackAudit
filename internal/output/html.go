@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"time"
 
-	"stackaudit/internal/scanner"
+	"stack/internal/scanner"
 )
 
 const reportHTMLTemplate = `<!doctype html>
@@ -13,7 +13,7 @@ const reportHTMLTemplate = `<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>StackAudit Report</title>
+  <title>stack Report</title>
   <style>
     body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f8fa; color: #20242a; }
     main { max-width: 1120px; margin: 0 auto; padding: 32px 20px 48px; }
@@ -38,7 +38,7 @@ const reportHTMLTemplate = `<!doctype html>
 <body>
 <main>
   <header>
-    <h1>StackAudit Report</h1>
+    <h1>stack Report</h1>
     <div class="muted">Local-only scan. No telemetry. Completed in {{ .Duration }}.</div>
   </header>
 

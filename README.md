@@ -1,11 +1,11 @@
-# 🛡️ StackAudit
+# 🛡️ stack
 ### The Local-First Backend Health & Security Audit Tool
 
-[![Go Version](https://img.shields.io/github/go-mod/go-version/neutron420/StackAudit?style=flat-square)](https://go.dev/)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/neutron420/stack?style=flat-square)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
-**StackAudit** is a high-performance, developer-first CLI tool designed to audit your backend project's health, security, and infrastructure readiness in seconds. It runs entirely locally, ensuring your secrets never leave your machine.
+**stack** is a high-performance, developer-first CLI tool designed to audit your backend project's health, security, and infrastructure readiness in seconds. It runs entirely locally, ensuring your secrets never leave your machine.
 
 ---
 
@@ -26,10 +26,10 @@
 
 ```bash
 # macOS/Linux
-curl -sSL https://stackaudit.io/install.sh | sh
+curl -sSL https://stack.io/install.sh | sh
 
 # Windows (PowerShell)
-iwr https://stackaudit.io/install.ps1 | iex
+iwr https://stack.io/install.ps1 | iex
 ```
 
 ### Usage
@@ -37,20 +37,20 @@ iwr https://stackaudit.io/install.ps1 | iex
 Run a full project health check:
 
 ```bash
-stackaudit scan
+stack scan
 ```
 
 Run a specific diagnostic check:
 
 ```bash
-stackaudit doctor
+stack doctor
 ```
 
 ---
 
 ## 🛠 Interactive Configuration
 
-StackAudit is ready to go out of the box, but you can customize it with a `.StackAudit.yaml` file:
+stack is ready to go out of the box, but you can customize it with a `.stack.yaml` file:
 
 ```yaml
 rule_packs:
@@ -58,7 +58,7 @@ rule_packs:
 output: table
 min_severity: warning
 plugins:
-  - .StackAudit/plugins/team.yaml
+  - .stack/plugins/team.yaml
 ```
 
 ---

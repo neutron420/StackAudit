@@ -3,7 +3,7 @@ package baseline
 import (
 	"testing"
 
-	"stackaudit/internal/scanner"
+	"stack/internal/scanner"
 )
 
 func TestFilterRebuildsSummaryAndScores(t *testing.T) {

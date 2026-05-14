@@ -1,4 +1,4 @@
-module stackaudit
+module stack
 
 go 1.22
 

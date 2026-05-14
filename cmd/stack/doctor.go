@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"stackaudit/internal/output"
+	"stack/internal/output"
 
 	"github.com/spf13/cobra"
 )
@@ -45,11 +45,11 @@ var doctorCmd = &cobra.Command{
 		results = append(results, k8sRes)
 
 		// Check Configuration
-		configRes := output.CheckResult{Name: "StackAudit Config"}
-		if _, err := os.Stat(".StackAudit.yaml"); os.IsNotExist(err) {
+		configRes := output.CheckResult{Name: "stack Config"}
+		if _, err := os.Stat(".stack.yaml"); os.IsNotExist(err) {
 			configRes.Status = "warning"
-			configRes.Message = "No .StackAudit.yaml found in current directory"
-			configRes.Hint = "Run 'StackAudit init' to create a default configuration"
+			configRes.Message = "No .stack.yaml found in current directory"
+			configRes.Hint = "Run 'stack init' to create a default configuration"
 		} else {
 			configRes.Status = "success"
 			configRes.Message = "Config file found and accessible"
