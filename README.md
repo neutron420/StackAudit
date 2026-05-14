@@ -44,6 +44,11 @@ curl -sSL https://raw.githubusercontent.com/neutron420/StackAudit/main/scripts/i
 go install github.com/neutron420/stack/cmd/stack@latest
 ```
 
+### Via NPM
+```bash
+npm install -g @riteshkumar04/stack-audit
+```
+
 ## Supported Platforms
 
 | OS | Architecture | Status |

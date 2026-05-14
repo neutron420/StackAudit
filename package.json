@@ -1,5 +1,5 @@
 {
-  "name": "@neutron420/stack-audit",
+  "name": "@riteshkumar04/stack-audit",
   "version": "1.0.6",
   "description": "The Local-First Backend Health & Security Audit Tool",
   "bin": {
