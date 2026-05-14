@@ -55,7 +55,8 @@ var rootCmd = &cobra.Command{
 				subCmd.SetOut(&buf)
 				subCmd.SetErr(&buf)
 				
-				// Reset flags for each run
+				// Set context and reset flags for each run
+				subCmd.SetContext(cmd.Context())
 				subCmd.Flags().Parse(subArgs)
 				
 				var cmdErr error

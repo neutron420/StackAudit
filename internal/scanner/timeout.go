@@ -14,6 +14,9 @@ type moduleResult struct {
 }
 
 func runModule(ctx context.Context, mod Module, root string, ruleSet rules.RuleSet, timeout time.Duration) ([]Finding, error, bool) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	modCtx := ctx
 	var cancel context.CancelFunc
 	if timeout > 0 {
