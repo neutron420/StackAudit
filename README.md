@@ -20,30 +20,45 @@
 
 ---
 
-## Quick Start
+## 🚀 Installation
 
-### Install
+### Using GitHub (Recommended)
+Download the latest binary for your operating system from the [Releases](https://github.com/neutron420/StackAudit/releases) page.
 
+### One-Line Installers
+**macOS / Linux**
 ```bash
-# macOS/Linux
-curl -sSL https://stack.io/install.sh | sh
-
-# Windows (PowerShell)
-iwr https://stack.io/install.ps1 | iex
+curl -sSL https://raw.githubusercontent.com/neutron420/StackAudit/main/scripts/install.sh | sh
 ```
 
-### Usage
-
-Run a full project health check:
-
-```bash
-stack scan
+**Windows (PowerShell)**
+```powershell
+iwr https://raw.githubusercontent.com/neutron420/StackAudit/main/scripts/install.ps1 | iex
 ```
 
-Run a specific diagnostic check:
-
+### From Source
 ```bash
-stack doctor
+go install github.com/neutron420/stack/cmd/stack@latest
+```
+
+## 🌍 Supported Platforms
+
+| OS | Architecture | Status |
+|----|--------------|--------|
+| **Windows** | x86_64, arm64, 386 | ✅ Fully Supported |
+| **macOS** | Apple Silicon (arm64), Intel (x86_64) | ✅ Fully Supported |
+| **Linux** | All Distros (x86_64, arm64, 386) | ✅ Fully Supported |
+
+## 🕹️ Usage
+
+Run the **Interactive Workbench**:
+```bash
+stack
+```
+
+Run a specific scan:
+```bash
+stack scan redis
 ```
 
 ---

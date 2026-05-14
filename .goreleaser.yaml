@@ -1,28 +1,67 @@
 project_name: stack
+
 before:
   hooks:
     - go mod tidy
+
 builds:
-  - main: ./cmd/stack
-    binary: stack
-    env:
+  - env:
       - CGO_ENABLED=0
     goos:
       - linux
-      - darwin
       - windows
+      - darwin
     goarch:
       - amd64
       - arm64
+      - "386"
+    main: ./cmd/stack
+    ldflags:
+      - -s -w -X stack/pkg/version.version={{.Version}} -X stack/pkg/version.commit={{.Commit}} -X stack/pkg/version.date={{.Date}} -X stack/pkg/version.builtBy=goreleaser
+
 archives:
-  - format: tar.gz
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
         format: zip
+
+nfpms:
+  - file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    vendor: StackAudit
+    homepage: https://github.com/neutron420/StackAudit
+    maintainer: neutron420 <support@stackaudit.io>
+    description: The Local-First Backend Health & Security Audit Tool
+    license: MIT
+    formats:
+      - deb
+      - rpm
+
+scoops:
+  - name: stack
+    repository:
+      owner: neutron420
+      name: scoop-bucket
+    directory: bucket
+    homepage: https://github.com/neutron420/StackAudit
+    description: The Local-First Backend Health & Security Audit Tool
+    license: MIT
+
 checksum:
-  name_template: "checksums.txt"
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
 changelog:
   sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
 release:
-  draft: true
+  github:
+    owner: neutron420
+    name: StackAudit
+  draft: false
+  prerelease: auto
