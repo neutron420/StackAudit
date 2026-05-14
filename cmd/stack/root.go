@@ -67,11 +67,20 @@ var rootCmd = &cobra.Command{
 				// (Running a TUI inside a TUI causes memory corruption)
 				subCmd.SetContext(cmd.Context())
 				
-				// Reset flags for subsequent runs
+				// Reset all flags to their default state for a clean execution
 				subCmd.Flags().VisitAll(func(f *pflag.Flag) {
-					f.Value.Set(f.DefValue)
+					if slice, ok := f.Value.(pflag.SliceValue); ok {
+						slice.Replace(nil)
+					} else {
+						f.Value.Set(f.DefValue)
+					}
 					f.Changed = false
 				})
+
+				// Re-load config to ensure fresh state for every command run in the workbench
+				if err := applyConfigFile(subCmd); err != nil {
+					return fmt.Sprintf("Error loading config: %v\n", err)
+				}
 
 				if err := subCmd.Flags().Parse(subArgs); err != nil {
 					return fmt.Sprintf("Error parsing flags: %v\n", err)

@@ -23,7 +23,8 @@ type fileConfig struct {
 }
 
 func applyConfigFile(cmd *cobra.Command) error {
-	if cmd.CommandPath() == rootCmd.CommandPath() || strings.HasPrefix(cmd.CommandPath(), rootCmd.CommandPath()+" init") {
+	// Skip for root command itself or init commands to avoid double-loading or conflicts during initialization
+	if !cmd.HasParent() || strings.Contains(cmd.CommandPath(), " init") {
 		return nil
 	}
 	path := cfg.ConfigPath
