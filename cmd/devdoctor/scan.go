@@ -60,6 +60,9 @@ func runScan(ctx context.Context) error {
 		}
 		selectedNames, err = output.MultiSelect(names)
 		if err != nil {
+			if err.Error() == "canceled" {
+				return nil
+			}
 			return err
 		}
 	}

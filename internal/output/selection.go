@@ -83,6 +83,10 @@ func MultiSelect(choices []string) ([]string, error) {
 	}
 
 	m = finalModel.(model)
+	if m.canceled {
+		return nil, fmt.Errorf("canceled")
+	}
+
 	selected := []string{}
 	for i := range m.selected {
 		selected = append(selected, m.choices[i])

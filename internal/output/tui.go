@@ -31,7 +31,7 @@ func RunScanSpinner(title string, runner func() (scanner.Report, error)) (scanne
 	m.spinner.Spinner = spinner.Pulse
 	m.spinner.Style = styleBranding
 
-	p := tea.NewProgram(m, tea.WithoutSignals())
+	p := tea.NewProgram(m)
 	final, err := p.Run()
 	if err != nil {
 		return scanner.Report{}, err
@@ -54,6 +54,10 @@ func runScanCmd(runner func() (scanner.Report, error)) tea.Cmd {
 
 func (m scanModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch typed := msg.(type) {
+	case tea.KeyMsg:
+		if typed.String() == "ctrl+c" {
+			return m, tea.Quit
+		}
 	case scanDoneMsg:
 		m.report = typed.report
 		m.err = typed.err
@@ -65,6 +69,7 @@ func (m scanModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	default:
 		return m, nil
 	}
+	return m, nil
 }
 
 func (m scanModel) View() string {
