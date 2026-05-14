@@ -11,54 +11,56 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func renderTable(report scanner.Report) string {
+func renderTable(report scanner.Report, showBanner bool) string {
 	var b strings.Builder
 
-	// Header Box
-	headerStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(styleBranding.GetForeground()).
-		Padding(0, 2).
-		Align(lipgloss.Center).
-		Width(40)
+	if showBanner {
+		// Header Box
+		headerStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(styleBranding.GetForeground()).
+			Padding(0, 2).
+			Align(lipgloss.Center).
+			Width(40)
 
-	headerContent := lipgloss.JoinVertical(lipgloss.Center,
-		styleBranding.Render("stack"),
-		styleMuted.Render("Production Health Scanner"),
-	)
-	fmt.Fprintln(&b, headerStyle.Render(headerContent))
+		headerContent := lipgloss.JoinVertical(lipgloss.Center,
+			styleBranding.Render("stack"),
+			styleMuted.Render("Production Health Scanner"),
+		)
+		fmt.Fprintln(&b, headerStyle.Render(headerContent))
 
-	fmt.Fprintln(&b, styleMuted.Render(" Local-only scan • Secrets stay on your machine"))
-	fmt.Fprintln(&b, "")
+		fmt.Fprintln(&b, styleMuted.Render(" Local-only scan • Secrets stay on your machine"))
+		fmt.Fprintln(&b, "")
 
-	// Score Rendering
-	renderScore := func(label string, score int) string {
-		var scoreStyle lipgloss.Style
-		if score >= 90 {
-			scoreStyle = styleSuccess
-		} else if score >= 70 {
-			scoreStyle = styleWarning
-		} else {
-			scoreStyle = styleCritical
+		// Score Rendering
+		renderScore := func(label string, score int) string {
+			var scoreStyle lipgloss.Style
+			if score >= 90 {
+				scoreStyle = styleSuccess
+			} else if score >= 70 {
+				scoreStyle = styleWarning
+			} else {
+				scoreStyle = styleCritical
+			}
+			return fmt.Sprintf("%-22s %s", styleHeader.Render(label), scoreStyle.Render(fmt.Sprintf("%d/100", score)))
 		}
-		return fmt.Sprintf("%-22s %s", styleHeader.Render(label), scoreStyle.Render(fmt.Sprintf("%d/100", score)))
+
+		fmt.Fprintln(&b, renderScore("Project Health:", report.Scores.Overall))
+		fmt.Fprintln(&b, renderScore("Security:", report.Scores.Security))
+		fmt.Fprintln(&b, renderScore("Infrastructure:", report.Scores.Infrastructure))
+		fmt.Fprintln(&b, renderScore("Configuration:", report.Scores.Configuration))
+		fmt.Fprintln(&b, "")
+
+		// Summary Bar
+		summary := fmt.Sprintf("%s %d  %s %d  %s %d  %s %d",
+			styleCritical.Render("Critical"), report.Summary.Critical,
+			styleWarning.Render("Warning"), report.Summary.Warning,
+			styleInfo.Render("Info"), report.Summary.Info,
+			styleSuccess.Render("Success"), report.Summary.Success,
+		)
+		fmt.Fprintln(&b, summary)
+		fmt.Fprintln(&b, "")
 	}
-
-	fmt.Fprintln(&b, renderScore("Project Health:", report.Scores.Overall))
-	fmt.Fprintln(&b, renderScore("Security:", report.Scores.Security))
-	fmt.Fprintln(&b, renderScore("Infrastructure:", report.Scores.Infrastructure))
-	fmt.Fprintln(&b, renderScore("Configuration:", report.Scores.Configuration))
-	fmt.Fprintln(&b, "")
-
-	// Summary Bar
-	summary := fmt.Sprintf("%s %d  %s %d  %s %d  %s %d",
-		styleCritical.Render("Critical"), report.Summary.Critical,
-		styleWarning.Render("Warning"), report.Summary.Warning,
-		styleInfo.Render("Info"), report.Summary.Info,
-		styleSuccess.Render("Success"), report.Summary.Success,
-	)
-	fmt.Fprintln(&b, summary)
-	fmt.Fprintln(&b, "")
 
 	// Findings
 	grouped := groupBySeverity(report.Findings)

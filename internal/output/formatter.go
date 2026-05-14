@@ -28,7 +28,7 @@ func ParseMode(value string) (Mode, error) {
 	}
 }
 
-func Render(report scanner.Report, mode Mode) (string, error) {
+func Render(report scanner.Report, mode Mode, showBanner bool) (string, error) {
 	switch mode {
 	case ModeJSON:
 		payload, err := json.MarshalIndent(report, "", "  ")
@@ -43,6 +43,6 @@ func Render(report scanner.Report, mode Mode) (string, error) {
 	case ModeHTML:
 		return renderHTML(report)
 	default:
-		return renderTable(report), nil
+		return renderTable(report, showBanner), nil
 	}
 }

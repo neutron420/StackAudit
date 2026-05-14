@@ -43,7 +43,7 @@ func runKubernetesScan(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	formatted, err := output.Render(report, mode)
+	formatted, err := output.Render(report, mode, true)
 	if err != nil {
 		return err
 	}

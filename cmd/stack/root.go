@@ -37,6 +37,9 @@ var rootCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return output.RunSandbox(func(shellArgs []string) string {
+				if len(shellArgs) > 0 && (shellArgs[0] == "stack" || shellArgs[0] == "./stack" || shellArgs[0] == "stack.exe") {
+					shellArgs = shellArgs[1:]
+				}
 				if len(shellArgs) == 0 {
 					return ""
 				}

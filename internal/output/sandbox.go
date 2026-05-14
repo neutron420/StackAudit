@@ -128,13 +128,13 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 
 		if !m.ready {
-			m.viewport = viewport.New(msg.Width, msg.Height-12)
-			m.viewport.YPosition = 8
+			m.viewport = viewport.New(msg.Width, msg.Height-16)
+			m.viewport.YPosition = 12
 			m.viewport.SetContent("Welcome to the STACK Sandbox. Type a command to begin.")
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - 12
+			m.viewport.Height = msg.Height - 16
 		}
 	}
 
@@ -149,28 +149,30 @@ func (m sandboxModel) View() string {
 		return "\n  Initializing..."
 	}
 
-	// 🏔️ TOP HEADER (Simplified, Non-Truncating)
-	logo := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#BD93F9")).
-		Bold(true).
-		Render(`   _____ _______       _____ _  __
+	// 🏔️ TOP HEADER (Centered & Clean)
+	logoStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9")).Bold(true)
+	logo := logoStyle.Render(`   _____ _______       _____ _  __
   / ____|__   __|/\   / ____| |/ /
  | (___    | |  /  \ | |    | ' / 
   \___ \   | | / /\ \| |    |  <  
   ____) |  | |/ ____ \ |____| . \ 
  |_____/   |_/_/    \_\_____|_|\_\`)
 
-	// Center manually to avoid garbling
-	paddingLogo := strings.Repeat(" ", max(0, (m.width-40)/2))
-	
 	missionText := lipgloss.NewStyle().Foreground(lipgloss.Color("#9499B0")).Render("The Local-First Backend Health & Security Audit Tool")
 	statsLine := lipgloss.NewStyle().Foreground(lipgloss.Color("#8BE9FD")).Render(m.stats)
 
-	header := fmt.Sprintf("\n%s%s\n\n%s\n%s\n", 
-		paddingLogo, strings.ReplaceAll(logo, "\n", "\n"+paddingLogo),
-		centerText(missionText, m.width),
-		centerText(statsLine, m.width),
+	// Combine header elements
+	headerContent := lipgloss.JoinVertical(lipgloss.Center,
+		"\n",
+		logo,
+		"\n",
+		missionText,
+		statsLine,
+		"\n",
 	)
+	
+	// Center the entire header block across the width
+	header := lipgloss.NewStyle().Width(m.width).Align(lipgloss.Center).Render(headerContent)
 
 	// 📊 MAIN VIEWPORT (Command Output)
 	content := lipgloss.NewStyle().
@@ -179,11 +181,13 @@ func (m sandboxModel) View() string {
 		Render(m.viewport.View())
 
 	// ⌨️ INPUT BAR
-	inputBar := lipgloss.NewStyle().Padding(1, 2).Render(m.textInput.View())
+	inputBar := lipgloss.NewStyle().Padding(0, 2).Render(m.textInput.View())
 
 	// Help Bar
 	help := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#6272A4")).
+		Width(m.width).
+		Align(lipgloss.Center).
 		Render("Ctrl+Up/Down Scroll • 'copy' Export • Esc/q Quit\n" + 
 		       "Modules: env, docker, secrets, redis, k8s, cicd, postgres")
 	
@@ -191,7 +195,7 @@ func (m sandboxModel) View() string {
 		header,
 		content,
 		inputBar,
-		lipgloss.NewStyle().Width(m.width).Align(lipgloss.Center).Render(help),
+		help,
 	)
 }
 

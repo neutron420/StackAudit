@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"os"
 
 	"stack/internal/cicd"
 	"stack/internal/custom"
@@ -26,11 +24,12 @@ var scanCmd = &cobra.Command{
 		if len(args) > 0 {
 			cfg.Modules = args
 		}
-		return runScan(cmd.Context())
+		return runScan(cmd)
 	},
 }
 
-func runScan(ctx context.Context) error {
+func runScan(cmd *cobra.Command) error {
+	ctx := cmd.Context()
 	mode, err := output.ParseMode(cfg.OutputMode)
 	if err != nil {
 		return err
@@ -107,17 +106,11 @@ func runScan(ctx context.Context) error {
 		return err
 	}
 
-	formatted, err := output.Render(report, mode)
+	formatted, err := output.Render(report, mode, !cfg.NoTUI)
 	if err != nil {
 		return err
 	}
 
-	if cfg.NoTUI {
-		// Clean output for Workbench
-		fmt.Fprintln(os.Stdout, formatted)
-	} else {
-		// Full output for CLI
-		fmt.Fprintln(os.Stdout, formatted)
-	}
+	fmt.Fprintln(cmd.OutOrStdout(), formatted)
 	return nil
 }
