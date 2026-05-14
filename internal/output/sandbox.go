@@ -2,157 +2,139 @@ package output
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
+	"time"
 
-	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
+// sandboxModel is the core of our k9s-style interactive shell
 type sandboxModel struct {
-	list     list.Model
-	choice   string
-	quitting bool
-	docker   string // "READY", "OFF", "MISSING"
-	k8s      string // "READY", "MISSING"
-	config   string // "OK", "MISSING"
+	viewport    viewport.Model
+	textInput   textinput.Model
+	ready       bool
+	output      *strings.Builder // Using a pointer to avoid "copy by value" panics
+	execute     func(args []string) string
+	width       int
+	height      int
+	stats       string
 }
 
-type item string
+type tickMsg struct{}
 
-func (i item) FilterValue() string { return "" }
-
-type itemDelegate struct{}
-
-func (d itemDelegate) Height() int                               { return 1 }
-func (d itemDelegate) Spacing() int                              { return 0 }
-func (d itemDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
-func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
-	if !ok {
-		return
-	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i)
-
-	fn := styleBranding.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return styleBranding.Copy().
-				Foreground(lipgloss.Color("#FFFFFF")).
-				Background(lipgloss.Color("#BD93F9")).
-				Padding(0, 1).
-				Render(s...)
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
+func tick() tea.Cmd {
+	return tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
+		return tickMsg{}
+	})
 }
 
-func RunSandbox() (string, error) {
-	items := []list.Item{
-		item("🚀 Full Health Scan"),
-		item("🩺 Environment Doctor"),
-		item("🛠️  Interactive Fixer"),
-		item("🧪 Create Demo Project"),
-		item("📈 View Last Report"),
-		item("🚪 EXIT SANDBOX"),
+func RunSandbox(execute func(args []string) string) error {
+	ti := textinput.New()
+	ti.Placeholder = "Type a command (scan, doctor, env...)"
+	ti.Focus()
+	ti.CharLimit = 156
+	ti.Width = 40
+	ti.Prompt = lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9")).Bold(true).Render("stack > ")
+
+	m := sandboxModel{
+		textInput: ti,
+		execute:   execute,
+		output:    &strings.Builder{},
+		stats:     getLiveStats(),
 	}
 
-	l := list.New(items, itemDelegate{}, 50, 12)
-	l.Title = "WORKBENCH"
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
-	l.Styles.Title = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#50FA7B")).
-		Padding(0, 1).
-		Background(lipgloss.Color("#282A36"))
-
-	m := sandboxModel{list: l}
-	m.refreshStatus()
-
-	p := tea.NewProgram(m, tea.WithAltScreen())
-	final, err := p.Run()
-	if err != nil {
-		return "", err
-	}
-
-	return final.(sandboxModel).choice, nil
+	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	_, err := p.Run()
+	return err
 }
 
 func (m sandboxModel) Init() tea.Cmd {
-	return nil
+	return tea.Batch(textinput.Blink, tick())
 }
 
 func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var (
+		tiCmd tea.Cmd
+		vpCmd tea.Cmd
+	)
+
 	switch msg := msg.(type) {
+	case tickMsg:
+		m.stats = getLiveStats()
+		return m, tick()
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
-			m.quitting = true
+		switch msg.Type {
+		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
-		case "enter":
-			i, ok := m.list.SelectedItem().(item)
-			if ok {
-				m.choice = string(i)
+		case tea.KeyUp:
+			m.viewport.LineUp(1)
+			return m, nil
+		case tea.KeyDown:
+			m.viewport.LineDown(1)
+			return m, nil
+		case tea.KeyPgUp:
+			m.viewport.ViewUp()
+			return m, nil
+		case tea.KeyPgDown:
+			m.viewport.ViewDown()
+			return m, nil
+		case tea.KeyEnter:
+			input := m.textInput.Value()
+			if input == "exit" || input == "quit" || input == "q" {
+				return m, tea.Quit
 			}
-			return m, tea.Quit
+			if input == "copy" {
+				os.WriteFile("stack_output.txt", []byte(m.output.String()), 0644)
+				m.output.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Render("\n[SYSTEM] Output saved to stack_output.txt 📄\n"))
+				m.viewport.SetContent(m.output.String())
+				m.viewport.GotoBottom()
+				m.textInput.Reset()
+				return m, nil
+			}
+			if input != "" {
+				m.output.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#6272A4")).Render(fmt.Sprintf("\n> %s\n", input)))
+				args := strings.Fields(input)
+				res := m.execute(args)
+				m.output.WriteString(res)
+				m.viewport.SetContent(m.output.String())
+				m.viewport.GotoBottom()
+				m.textInput.Reset()
+			}
 		}
+
 	case tea.WindowSizeMsg:
-		m.list.SetWidth(msg.Width)
+		m.width = msg.Width
+		m.height = msg.Height
+
+		if !m.ready {
+			m.viewport = viewport.New(msg.Width, msg.Height-18)
+			m.viewport.YPosition = 15
+			m.viewport.SetContent("Welcome to the STACK Sandbox. Type a command to begin.")
+			m.ready = true
+		} else {
+			m.viewport.Width = msg.Width
+			m.viewport.Height = msg.Height - 18
+		}
 	}
 
-	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
-	return m, cmd
-}
+	m.textInput, tiCmd = m.textInput.Update(msg)
+	m.viewport, vpCmd = m.viewport.Update(msg)
 
-func (m *sandboxModel) refreshStatus() {
-	// Check Docker
-	if _, err := exec.LookPath("docker"); err != nil {
-		m.docker = "MISSING"
-	} else if err := exec.Command("docker", "info").Run(); err != nil {
-		m.docker = "OFFLINE"
-	} else {
-		m.docker = "READY"
-	}
-
-	// Check K8s
-	if _, err := exec.LookPath("kubectl"); err != nil {
-		m.k8s = "MISSING"
-	} else {
-		m.k8s = "READY"
-	}
-
-	// Check Config
-	if _, err := os.Stat(".stack.yaml"); os.IsNotExist(err) {
-		m.config = "MISSING"
-	} else {
-		m.config = "OK"
-	}
+	return m, tea.Batch(tiCmd, vpCmd)
 }
 
 func (m sandboxModel) View() string {
-	if m.quitting {
-		return ""
+	if !m.ready {
+		return "\n  Initializing..."
 	}
 
-	// 🎨 Premium Theme & Dimensions
-	width := 100 // Fallback
-	height := 30 // Fallback
-
-	// 🏔️ TOP HEADER (k9s style)
-	headerLeft := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#8BE9FD")).
-		Render(fmt.Sprintf(
-			"Context: %s\nUser:    %s\nCPU:     %s\nMEM:     %s",
-			"local", os.Getenv("USERNAME"), "2%", "14%",
-		))
-
+	// 🏔️ TOP HEADER (Centered Logo + Padding)
 	logo := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#BD93F9")).
 		Bold(true).
@@ -163,60 +145,103 @@ func (m sandboxModel) View() string {
   ____) |  | |/ ____ \ |____| . \ 
  |_____/   |_/_/    \_\_____|_|\_\`)
 
-	header := lipgloss.JoinHorizontal(lipgloss.Top,
-		lipgloss.NewStyle().Width(40).Render(headerLeft),
-		lipgloss.NewStyle().Width(width-40).Align(lipgloss.Right).Render(logo),
+	centeredLogo := lipgloss.NewStyle().
+		Width(m.width).
+		Align(lipgloss.Center).
+		PaddingTop(2). // ADD PADDING TO PREVENT CUTTING
+		Render(logo)
+
+	// MISSION & SAFETY MESSAGE (No Emojis, Clean Typography)
+	mission := lipgloss.NewStyle().
+		Width(m.width - 20).
+		Align(lipgloss.Center).
+		Foreground(lipgloss.Color("#9499B0")).
+		Render("The Local-First Backend Health & Security Audit Tool\n" + 
+		       "Guarding your infrastructure by identifying vulnerabilities, leaks, and misconfigurations.\n\n" + 
+		       lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true).Render("PRIVACY GUARANTEE: ") + 
+		       lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Render("Everything stays on your machine. No data or secrets ever leave this terminal."))
+
+	statsLine := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#8BE9FD")).
+		Padding(0, 1).
+		Render(m.stats) // USE CACHED STATS
+	
+	header := lipgloss.JoinVertical(lipgloss.Center,
+		centeredLogo,
+		lipgloss.NewStyle().Padding(1, 0).Render(mission),
+		statsLine,
 	)
 
-	// 📊 MAIN CONTENT
-	getStatusStyle := func(status string) lipgloss.Style {
-		switch status {
-		case "READY", "OK":
-			return lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true)
-		case "OFFLINE", "MISSING":
-			return lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5555")).Bold(true)
-		default:
-			return lipgloss.NewStyle().Foreground(lipgloss.Color("#F1FA8C")).Bold(true)
-		}
-	}
-
-	sidebar := lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder(), false, true, false, false).
+	// 📊 MAIN VIEWPORT (Command Output)
+	content := lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder(), true, false, true, false).
 		BorderForeground(lipgloss.Color("#6272A4")).
-		Padding(1, 2).
-		Width(30).
-		Height(height - 12).
-		Render(fmt.Sprintf(
-			"%s\n\n%s %s\n%s %s\n%s %s",
-			lipgloss.NewStyle().Bold(true).Underline(true).Foreground(lipgloss.Color("#FF79C6")).Render("PROJECT STATUS"),
-			"󰄬 Docker:", getStatusStyle(m.docker).Render(m.docker),
-			"󰄬 K8s:   ", getStatusStyle(m.k8s).Render(m.k8s),
-			"󰄬 Config:", getStatusStyle(m.config).Render(m.config),
-		))
+		Render(m.viewport.View())
 
-	mainArea := lipgloss.NewStyle().
-		Padding(1, 4).
-		Render(m.list.View())
+	// ⌨️ INPUT BAR
+	inputBar := lipgloss.NewStyle().
+		Padding(1, 0).
+		Render(m.textInput.View())
 
-	content := lipgloss.JoinHorizontal(lipgloss.Top, sidebar, mainArea)
+	// Help Bar
+	help := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#6272A4")).
+		Render("Up/Down Scroll • 'copy' Save to File • Enter Execute • Esc/q Quit")
+	centeredHelp := lipgloss.NewStyle().Width(m.width).Align(lipgloss.Center).Render(help)
 
-	// ⌨️ BOTTOM HOTKEY BAR
-	hotkeys := []string{
-		lipgloss.NewStyle().Background(lipgloss.Color("#6272A4")).Foreground(lipgloss.Color("#FFFFFF")).Render(" <s> Scan "),
-		lipgloss.NewStyle().Background(lipgloss.Color("#6272A4")).Foreground(lipgloss.Color("#FFFFFF")).Render(" <d> Doctor "),
-		lipgloss.NewStyle().Background(lipgloss.Color("#6272A4")).Foreground(lipgloss.Color("#FFFFFF")).Render(" <f> Fix "),
-		lipgloss.NewStyle().Background(lipgloss.Color("#FF5555")).Foreground(lipgloss.Color("#FFFFFF")).Render(" <q> Quit "),
-	}
-	footer := lipgloss.NewStyle().
-		Background(lipgloss.Color("#44475A")).
-		Width(width).
-		Padding(0, 1).
-		Render(strings.Join(hotkeys, "  "))
-
-	// 🏆 ASSEMBLE EVERYTHING
+	// 🏆 ASSEMBLE
 	return lipgloss.JoinVertical(lipgloss.Left,
 		lipgloss.NewStyle().Padding(1, 2).Render(header),
-		lipgloss.NewStyle().Padding(1, 0).Height(height-8).Render(content),
-		footer,
+		content,
+		lipgloss.NewStyle().Padding(0, 2).Render(inputBar),
+		centeredHelp,
 	)
+}
+
+func getLiveStats() string {
+	host, _ := os.Hostname()
+	if len(host) > 15 {
+		host = host[:12] + "..."
+	}
+
+	var cpuStr, memStr string
+
+	switch runtime.GOOS {
+	case "windows":
+		cpuCmd := exec.Command("powershell", "-NoProfile", "-Command", "(Get-CimInstance Win32_Processor).LoadPercentage")
+		cpuOut, _ := cpuCmd.Output()
+		cpuStr = strings.TrimSpace(string(cpuOut))
+
+		memCmd := exec.Command("powershell", "-NoProfile", "-Command", "[math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB, 1)")
+		memOut, _ := memCmd.Output()
+		memStr = strings.TrimSpace(string(memOut)) + " GB Free"
+
+	case "linux":
+		// Simple CPU load from /proc/loadavg
+		cpuOut, _ := os.ReadFile("/proc/loadavg")
+		cpuStr = strings.Fields(string(cpuOut))[0] // 1 min load
+
+		// Simple Memory from /proc/meminfo
+		memOut, _ := exec.Command("free", "-m").Output()
+		lines := strings.Split(string(memOut), "\n")
+		if len(lines) > 1 {
+			fields := strings.Fields(lines[1])
+			if len(fields) > 3 {
+				memStr = fields[3] + " MB Free"
+			}
+		}
+
+	case "darwin": // macOS
+		cpuOut, _ := exec.Command("sysctl", "-n", "vm.loadavg").Output()
+		cpuStr = strings.Fields(string(cpuOut))[1] // 1 min load
+
+		memOut, _ := exec.Command("sysctl", "-n", "hw.memsize").Output()
+		memStr = strings.TrimSpace(string(memOut)) // Simplified
+	}
+
+	if cpuStr == "" { cpuStr = "0" }
+	if memStr == "" { memStr = "N/A" }
+
+	return fmt.Sprintf("HOST: %s | OS: %s | CPU: %s | MEM: %s", 
+		strings.ToUpper(host), strings.ToUpper(runtime.GOOS), cpuStr, memStr)
 }

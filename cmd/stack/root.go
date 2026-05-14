@@ -36,7 +36,7 @@ var rootCmd = &cobra.Command{
 	Long:  "Stack is a local-first backend health scanner for environment, secrets, Docker, CI/CD, Kubernetes, Redis, PostgreSQL, and custom plugin checks.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			return output.RunWorkbench(func(shellArgs []string) string {
+			return output.RunSandbox(func(shellArgs []string) string {
 				if len(shellArgs) == 0 {
 					return ""
 				}
@@ -55,9 +55,14 @@ var rootCmd = &cobra.Command{
 				subCmd.SetOut(&buf)
 				subCmd.SetErr(&buf)
 				
-				// Set context and reset flags for each run
+				// Set context, reset flags, and DISABLE TUI for sub-execution
+				// (Running a TUI inside a TUI causes memory corruption)
 				subCmd.SetContext(cmd.Context())
 				subCmd.Flags().Parse(subArgs)
+				
+				oldNoTUI := cfg.NoTUI
+				cfg.NoTUI = true
+				defer func() { cfg.NoTUI = oldNoTUI }()
 				
 				var cmdErr error
 				if subCmd.RunE != nil {
