@@ -26,12 +26,12 @@ type sandboxModel struct {
 	stats       string
 }
 
-type tickMsg struct{}
+type statsMsg string
 
-func tick() tea.Cmd {
-	return tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
-		return tickMsg{}
-	})
+func pollStats() tea.Cmd {
+	return func() tea.Msg {
+		return statsMsg(getLiveStats())
+	}
 }
 
 func RunSandbox(execute func(args []string) string) error {
@@ -46,7 +46,7 @@ func RunSandbox(execute func(args []string) string) error {
 		textInput: ti,
 		execute:   execute,
 		output:    &strings.Builder{},
-		stats:     getLiveStats(),
+		stats:     "Initializing stats...",
 	}
 
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
@@ -55,7 +55,7 @@ func RunSandbox(execute func(args []string) string) error {
 }
 
 func (m sandboxModel) Init() tea.Cmd {
-	return tea.Batch(textinput.Blink, tick())
+	return tea.Batch(textinput.Blink, pollStats())
 }
 
 func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -65,9 +65,11 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	)
 
 	switch msg := msg.(type) {
-	case tickMsg:
-		m.stats = getLiveStats()
-		return m, tick()
+	case statsMsg:
+		m.stats = string(msg)
+		return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
+			return pollStats()()
+		})
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
@@ -148,28 +150,29 @@ func (m sandboxModel) View() string {
 	centeredLogo := lipgloss.NewStyle().
 		Width(m.width).
 		Align(lipgloss.Center).
-		PaddingTop(2). // ADD PADDING TO PREVENT CUTTING
+		PaddingTop(1).
 		Render(logo)
 
 	// MISSION & SAFETY MESSAGE (No Emojis, Clean Typography)
 	mission := lipgloss.NewStyle().
-		Width(m.width - 20).
+		Width(m.width).
 		Align(lipgloss.Center).
 		Foreground(lipgloss.Color("#9499B0")).
 		Render("The Local-First Backend Health & Security Audit Tool\n" + 
-		       "Guarding your infrastructure by identifying vulnerabilities, leaks, and misconfigurations.\n\n" + 
-		       lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true).Render("PRIVACY GUARANTEE: ") + 
-		       lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Render("Everything stays on your machine. No data or secrets ever leave this terminal."))
+		       "Guarding your infrastructure by identifying vulnerabilities, leaks, and misconfigurations.\n" + 
+		       lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")).Bold(true).Render("PRIVACY: ") + 
+		       "Everything stays on your machine. No data or secrets ever leave this terminal.")
 
 	statsLine := lipgloss.NewStyle().
+		Width(m.width).
+		Align(lipgloss.Center).
 		Foreground(lipgloss.Color("#8BE9FD")).
-		Padding(0, 1).
-		Render(m.stats) // USE CACHED STATS
+		Render(m.stats)
 	
-	header := lipgloss.JoinVertical(lipgloss.Center,
+	header := lipgloss.JoinVertical(lipgloss.Left,
 		centeredLogo,
-		lipgloss.NewStyle().Padding(1, 0).Render(mission),
-		statsLine,
+		mission,
+		lipgloss.NewStyle().PaddingTop(1).Render(statsLine),
 	)
 
 	// 📊 MAIN VIEWPORT (Command Output)
@@ -208,13 +211,24 @@ func getLiveStats() string {
 
 	switch runtime.GOOS {
 	case "windows":
-		cpuCmd := exec.Command("powershell", "-NoProfile", "-Command", "(Get-CimInstance Win32_Processor).LoadPercentage")
-		cpuOut, _ := cpuCmd.Output()
-		cpuStr = strings.TrimSpace(string(cpuOut))
-
-		memCmd := exec.Command("powershell", "-NoProfile", "-Command", "[math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB, 1)")
-		memOut, _ := memCmd.Output()
-		memStr = strings.TrimSpace(string(memOut)) + " GB Free"
+		cmdText := "(Get-CimInstance Win32_Processor).LoadPercentage; [math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB, 2)"
+		cmd := exec.Command("powershell", "-NoProfile", "-Command", cmdText)
+		out, _ := cmd.Output()
+		
+		raw := string(out)
+		lines := strings.Split(raw, "\n")
+		var valid []string
+		for _, l := range lines {
+			t := strings.TrimSpace(l)
+			if t != "" {
+				valid = append(valid, t)
+			}
+		}
+		
+		if len(valid) >= 2 {
+			cpuStr = valid[0] + "%"
+			memStr = valid[1] + " GB FREE"
+		}
 
 	case "linux":
 		// Simple CPU load from /proc/loadavg
