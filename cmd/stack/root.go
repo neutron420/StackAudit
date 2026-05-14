@@ -35,7 +35,25 @@ var rootCmd = &cobra.Command{
 	Short: "Stack scans backend projects for production health issues",
 	Long:  "Stack is a local-first backend health scanner for environment, secrets, Docker, CI/CD, Kubernetes, Redis, PostgreSQL, and custom plugin checks.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return cmd.Help()
+		choice, err := output.RunSandbox()
+		if err != nil {
+			return err
+		}
+
+		switch choice {
+		case "🚀 Full Health Scan":
+			return scanCmd.RunE(cmd, nil)
+		case "🩺 Environment Doctor":
+			return doctorCmd.RunE(cmd, nil)
+		case "🛠️  Interactive Fixer":
+			return fixCmd.RunE(cmd, nil)
+		case "🧪 Create Demo Project":
+			return initDemoCmd.RunE(cmd, nil)
+		case "📈 View Last Report":
+			fmt.Println("Opening last report...")
+			return nil
+		}
+		return nil
 	},
 }
 

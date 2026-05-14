@@ -81,4 +81,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
-<p align="center">Built with for developers who care about production health.</p>
+<p align="center">Built for developers who care about production health.</p>
