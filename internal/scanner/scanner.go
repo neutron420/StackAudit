@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"devdoctor/internal/health"
-	"devdoctor/internal/rules"
+	"stackaudit/internal/health"
+	"stackaudit/internal/rules"
 )
 
 type Module interface {

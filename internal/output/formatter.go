@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/scanner"
 )
 
 type Mode string

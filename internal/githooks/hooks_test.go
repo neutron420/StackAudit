@@ -18,7 +18,7 @@ func TestInstallAndUninstallHookBlock(t *testing.T) {
 		t.Fatalf("write existing hook: %v", err)
 	}
 
-	installed, err := Install(root, []string{"pre-commit"}, Options{Command: "devdoctor scan --exit-code"})
+	installed, err := Install(root, []string{"pre-commit"}, Options{Command: "StackAudit scan --exit-code"})
 	if err != nil {
 		t.Fatalf("Install returned error: %v", err)
 	}
@@ -30,7 +30,7 @@ func TestInstallAndUninstallHookBlock(t *testing.T) {
 		t.Fatalf("read hook: %v", err)
 	}
 	content := string(data)
-	if !strings.Contains(content, "echo existing") || !strings.Contains(content, startMarker) || !strings.Contains(content, "devdoctor scan --exit-code") {
+	if !strings.Contains(content, "echo existing") || !strings.Contains(content, startMarker) || !strings.Contains(content, "StackAudit scan --exit-code") {
 		t.Fatalf("unexpected hook content:\n%s", content)
 	}
 

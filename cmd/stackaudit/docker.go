@@ -5,22 +5,22 @@ import (
 	"fmt"
 	"os"
 
-	"devdoctor/internal/cicd"
-	"devdoctor/internal/output"
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/docker"
+	"stackaudit/internal/output"
+	"stackaudit/internal/scanner"
 
 	"github.com/spf13/cobra"
 )
 
-var ciCmd = &cobra.Command{
-	Use:   "ci",
-	Short: "Scan CI/CD workflows",
+var dockerCmd = &cobra.Command{
+	Use:   "docker",
+	Short: "Scan Docker configuration",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runCIScan(cmd.Context())
+		return runDockerScan(cmd.Context())
 	},
 }
 
-func runCIScan(ctx context.Context) error {
+func runDockerScan(ctx context.Context) error {
 	mode, err := output.ParseMode(cfg.OutputMode)
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func runCIScan(ctx context.Context) error {
 		return err
 	}
 
-	modules := []scanner.Module{cicd.NewScanner()}
+	modules := []scanner.Module{docker.NewScanner()}
 	report, err := scanner.Run(ctx, cfg.RootPath, ruleSet, modules, options)
 	if err != nil {
 		return err

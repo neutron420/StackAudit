@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/scanner"
 
 	"github.com/charmbracelet/lipgloss"
 )

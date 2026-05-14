@@ -12,22 +12,22 @@ type Options struct {
 
 func WriteStarter(root string, opts Options) ([]string, error) {
 	files := map[string]string{
-		".devdoctor.yaml":  starterConfig,
-		".devdoctorignore": starterIgnore,
-		filepath.Join(".devdoctor", "plugins", "team.yaml"): starterPlugin,
+		".StackAudit.yaml":  starterConfig,
+		".StackAuditignore": starterIgnore,
+		filepath.Join(".StackAudit", "plugins", "team.yaml"): starterPlugin,
 	}
 	return writeFiles(root, files, opts)
 }
 
 func WriteGitHubActions(root string, opts Options) ([]string, error) {
 	return writeFiles(root, map[string]string{
-		filepath.Join(".github", "workflows", "devdoctor.yml"): githubActionsWorkflow,
+		filepath.Join(".github", "workflows", "StackAudit.yml"): githubActionsWorkflow,
 	}, opts)
 }
 
 func WriteEmptyBaseline(root string, opts Options) ([]string, error) {
 	return writeFiles(root, map[string]string{
-		".devdoctor.baseline.json": "{\n  \"version\": 1,\n  \"entries\": [],\n  \"root_hint\": \".\"\n}\n",
+		".StackAudit.baseline.json": "{\n  \"version\": 1,\n  \"entries\": [],\n  \"root_hint\": \".\"\n}\n",
 	}, opts)
 }
 
@@ -59,7 +59,7 @@ rule_packs:
 output: table
 exit_code: true
 min_severity: warning
-baseline: .devdoctor.baseline.json
+baseline: .StackAudit.baseline.json
 module_timeouts:
   - env=1s
   - secrets=5s
@@ -69,7 +69,7 @@ module_timeouts:
   - redis=2s
   - postgres=2s
 plugins:
-  - .devdoctor/plugins/team.yaml
+  - .stackaudit/plugins/team.yaml
 `
 
 const starterIgnore = `node_modules/
@@ -91,7 +91,7 @@ rules:
     contains: "DEBUG=true"
 `
 
-const githubActionsWorkflow = `name: DevDoctor
+const githubActionsWorkflow = `name: StackAudit
 
 on:
   pull_request:
@@ -104,20 +104,20 @@ permissions:
   security-events: write
 
 jobs:
-  devdoctor:
+  StackAudit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
-      - name: Install DevDoctor
-        run: go install ./cmd/devdoctor
-      - name: Run DevDoctor
-        run: devdoctor scan --output sarif --exit-code --min-severity warning > devdoctor.sarif
+      - name: Install StackAudit
+        run: go install ./cmd/StackAudit
+      - name: Run StackAudit
+        run: StackAudit scan --output sarif --exit-code --min-severity warning > StackAudit.sarif
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: devdoctor.sarif
+          sarif_file: StackAudit.sarif
 `

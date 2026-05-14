@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"devdoctor/internal/githooks"
-	"devdoctor/internal/projectinit"
+	"stackaudit/internal/githooks"
+	"stackaudit/internal/projectinit"
 
 	"github.com/spf13/cobra"
 )
@@ -18,7 +18,7 @@ var initConfig struct {
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Create DevDoctor starter configuration",
+	Short: "Create StackAudit starter configuration",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		written, err := projectinit.WriteStarter(cfg.RootPath, projectinit.Options{Force: initConfig.Force})
 		if err != nil {
@@ -45,7 +45,7 @@ var initCmd = &cobra.Command{
 
 var initGitHubActionsCmd = &cobra.Command{
 	Use:   "github-actions",
-	Short: "Create a GitHub Actions workflow for DevDoctor",
+	Short: "Create a GitHub Actions workflow for StackAudit",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		written, err := projectinit.WriteGitHubActions(cfg.RootPath, projectinit.Options{Force: initConfig.Force})
 		if err != nil {
@@ -58,7 +58,7 @@ var initGitHubActionsCmd = &cobra.Command{
 
 func init() {
 	initCmd.Flags().BoolVar(&initConfig.Force, "force", false, "Overwrite existing starter files")
-	initCmd.Flags().BoolVar(&initConfig.Hooks, "hooks", false, "Install DevDoctor pre-commit and pre-push hooks")
+	initCmd.Flags().BoolVar(&initConfig.Hooks, "hooks", false, "Install StackAudit pre-commit and pre-push hooks")
 	initCmd.Flags().BoolVar(&initConfig.Baseline, "baseline", false, "Create an empty baseline file")
 	initGitHubActionsCmd.Flags().BoolVar(&initConfig.Force, "force", false, "Overwrite an existing GitHub Actions workflow")
 	initCmd.AddCommand(initGitHubActionsCmd)
@@ -66,7 +66,7 @@ func init() {
 
 func printInitResult(cmd *cobra.Command, paths []string) {
 	if len(paths) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "DevDoctor starter files already exist")
+		fmt.Fprintln(cmd.OutOrStdout(), "StackAudit starter files already exist")
 		return
 	}
 	fmt.Fprintf(cmd.OutOrStdout(), "Wrote %s\n", strings.Join(paths, ", "))

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"devdoctor/internal/fix"
-	"devdoctor/internal/output"
+	"stackaudit/internal/fix"
+	"stackaudit/internal/output"
 
 	"github.com/spf13/cobra"
 )

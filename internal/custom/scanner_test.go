@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"devdoctor/internal/rules"
+	"stackaudit/internal/rules"
 )
 
 func TestCustomScannerFindsConfiguredRule(t *testing.T) {

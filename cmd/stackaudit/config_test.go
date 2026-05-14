@@ -10,7 +10,7 @@ import (
 
 func TestApplyConfigFilePopulatesUnsetConfig(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, ".devdoctor.yaml")
+	path := filepath.Join(dir, ".StackAudit.yaml")
 	if err := os.WriteFile(path, []byte(`
 root: ./service
 rules: ./rules.yaml
@@ -35,7 +35,7 @@ plugins:
 		ConfigPath:     path,
 		OutputMode:     "table",
 		MinSeverity:    "warning",
-		BaselinePath:   ".devdoctor.baseline.json",
+		BaselinePath:   ".StackAudit.baseline.json",
 		ModuleTimeouts: nil,
 	}
 

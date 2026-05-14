@@ -9,5 +9,5 @@ var (
 )
 
 func FullVersion() string {
-	return fmt.Sprintf("DevDoctor %s (commit %s, built %s)", Version, Commit, Date)
+	return fmt.Sprintf("StackAudit %s (commit %s, built %s)", Version, Commit, Date)
 }

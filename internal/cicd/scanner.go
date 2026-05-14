@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"devdoctor/internal/rules"
-	"devdoctor/internal/scanner"
-	"devdoctor/internal/utils"
+	"stackaudit/internal/rules"
+	"stackaudit/internal/scanner"
+	"stackaudit/internal/utils"
 
 	"gopkg.in/yaml.v3"
 )

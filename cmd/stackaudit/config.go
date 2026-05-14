@@ -28,7 +28,7 @@ func applyConfigFile(cmd *cobra.Command) error {
 	}
 	path := cfg.ConfigPath
 	if path == "" {
-		path = ".devdoctor.yaml"
+		path = ".StackAudit.yaml"
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {

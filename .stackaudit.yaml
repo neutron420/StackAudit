@@ -4,7 +4,7 @@ rule_packs:
 output: table
 exit_code: true
 min_severity: warning
-baseline: .devdoctor.baseline.json
+baseline: .StackAudit.baseline.json
 module_timeouts:
   - env=1s
   - secrets=5s
@@ -14,4 +14,4 @@ module_timeouts:
   - redis=2s
   - postgres=2s
 plugins:
-  - .devdoctor/plugins/team.yaml
+  - .StackAudit/plugins/team.yaml

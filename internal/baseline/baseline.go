@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/scanner"
 )
 
 type Entry struct {

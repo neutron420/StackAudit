@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/scanner"
 )
 
 func TestRenderHTMLIncludesRemediation(t *testing.T) {

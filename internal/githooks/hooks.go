@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	startMarker = "# devdoctor hook:start"
-	endMarker   = "# devdoctor hook:end"
+	startMarker = "# StackAudit hook:start"
+	endMarker   = "# StackAudit hook:end"
 )
 
 var validHooks = map[string]bool{
@@ -27,7 +27,7 @@ func Install(root string, hooks []string, opts Options) ([]string, error) {
 	}
 	command := strings.TrimSpace(opts.Command)
 	if command == "" {
-		command = `devdoctor scan --exit-code --min-severity warning`
+		command = `StackAudit scan --exit-code --min-severity warning`
 	}
 	hooksDir, err := hooksDir(root)
 	if err != nil {
@@ -140,10 +140,10 @@ func removeBlock(current string) string {
 
 func hookBlock(command string) string {
 	return startMarker + `
-if command -v devdoctor >/dev/null 2>&1; then
+if command -v StackAudit >/dev/null 2>&1; then
   ` + command + `
 else
-  echo "devdoctor not found; skipping DevDoctor scan"
+  echo "StackAudit not found; skipping StackAudit scan"
 fi
 ` + endMarker + `
 `

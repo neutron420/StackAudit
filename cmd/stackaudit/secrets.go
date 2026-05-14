@@ -5,22 +5,22 @@ import (
 	"fmt"
 	"os"
 
-	"devdoctor/internal/docker"
-	"devdoctor/internal/output"
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/output"
+	"stackaudit/internal/scanner"
+	"stackaudit/internal/secrets"
 
 	"github.com/spf13/cobra"
 )
 
-var dockerCmd = &cobra.Command{
-	Use:   "docker",
-	Short: "Scan Docker configuration",
+var secretsCmd = &cobra.Command{
+	Use:   "secrets",
+	Short: "Scan for secret leaks",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runDockerScan(cmd.Context())
+		return runSecretsScan(cmd.Context())
 	},
 }
 
-func runDockerScan(ctx context.Context) error {
+func runSecretsScan(ctx context.Context) error {
 	mode, err := output.ParseMode(cfg.OutputMode)
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func runDockerScan(ctx context.Context) error {
 		return err
 	}
 
-	modules := []scanner.Module{docker.NewScanner()}
+	modules := []scanner.Module{secrets.NewScanner()}
 	report, err := scanner.Run(ctx, cfg.RootPath, ruleSet, modules, options)
 	if err != nil {
 		return err

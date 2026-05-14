@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"devdoctor/internal/kubernetes"
-	"devdoctor/internal/output"
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/kubernetes"
+	"stackaudit/internal/output"
+	"stackaudit/internal/scanner"
 
 	"github.com/spf13/cobra"
 )

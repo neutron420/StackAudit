@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"strings"
 
-	"devdoctor/internal/rules"
-	"devdoctor/internal/scanner"
-	"devdoctor/internal/utils"
+	"stackaudit/internal/rules"
+	"stackaudit/internal/scanner"
+	"stackaudit/internal/utils"
 )
 
 type Scanner struct{}

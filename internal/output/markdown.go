@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/scanner"
 )
 
 func renderMarkdown(report scanner.Report) string {
 	builder := &strings.Builder{}
-	fmt.Fprintln(builder, "# DevDoctor Report")
+	fmt.Fprintln(builder, "# StackAudit Report")
 	fmt.Fprintln(builder, "")
 	fmt.Fprintln(builder, "- Local-only scan. No telemetry. No network calls.")
 	fmt.Fprintln(builder, "")

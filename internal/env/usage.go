@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"devdoctor/internal/utils"
+	"stackaudit/internal/utils"
 )
 
 var (

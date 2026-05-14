@@ -1,4 +1,4 @@
-module devdoctor
+module stackaudit
 
 go 1.22
 

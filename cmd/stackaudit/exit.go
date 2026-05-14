@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/scanner"
 )
 
 func applyExitCode(report scanner.Report) error {

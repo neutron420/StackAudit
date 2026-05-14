@@ -3,8 +3,8 @@ package env
 import (
 	"context"
 
-	"devdoctor/internal/rules"
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/rules"
+	"stackaudit/internal/scanner"
 )
 
 type Scanner struct{}

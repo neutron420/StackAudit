@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"devdoctor/internal/output"
-	"devdoctor/internal/rules"
-	"devdoctor/pkg/version"
+	"stackaudit/internal/output"
+	"stackaudit/internal/rules"
+	"stackaudit/pkg/version"
 
 	"github.com/spf13/cobra"
 )
@@ -31,9 +31,9 @@ type appConfig struct {
 var cfg appConfig
 
 var rootCmd = &cobra.Command{
-	Use:   "devdoctor",
-	Short: "DevDoctor scans backend projects for production health issues",
-	Long:  "DevDoctor is a local-first backend health scanner for environment, secrets, Docker, CI/CD, Kubernetes, Redis, PostgreSQL, and custom plugin checks.",
+	Use:   "StackAudit",
+	Short: "StackAudit scans backend projects for production health issues",
+	Long:  "StackAudit is a local-first backend health scanner for environment, secrets, Docker, CI/CD, Kubernetes, Redis, PostgreSQL, and custom plugin checks.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
@@ -61,14 +61,14 @@ func init() {
 		return nil
 	}
 	rootCmd.PersistentFlags().StringVarP(&cfg.RootPath, "path", "p", ".", "Project root path")
-	rootCmd.PersistentFlags().StringVar(&cfg.ConfigPath, "config", ".devdoctor.yaml", "Path to DevDoctor config file")
+	rootCmd.PersistentFlags().StringVar(&cfg.ConfigPath, "config", ".StackAudit.yaml", "Path to StackAudit config file")
 	rootCmd.PersistentFlags().StringVar(&cfg.RulesPath, "rules", "", "Path to rules YAML file")
 	rootCmd.PersistentFlags().StringSliceVar(&cfg.RulePacks, "rule-pack", nil, "Rule pack names or YAML paths (repeatable)")
 	rootCmd.PersistentFlags().StringVarP(&cfg.OutputMode, "output", "o", string(output.ModeTable), "Output mode: table|json|markdown|sarif|html")
 	rootCmd.PersistentFlags().BoolVar(&cfg.NoTUI, "no-tui", false, "Disable TUI loading indicators")
 	rootCmd.PersistentFlags().BoolVar(&cfg.ExitCode, "exit-code", false, "Return non-zero exit code when findings meet --min-severity")
 	rootCmd.PersistentFlags().StringVar(&cfg.MinSeverity, "min-severity", "warning", "Minimum severity for non-zero exit code: critical|warning|info")
-	rootCmd.PersistentFlags().StringVar(&cfg.BaselinePath, "baseline", ".devdoctor.baseline.json", "Baseline file path")
+	rootCmd.PersistentFlags().StringVar(&cfg.BaselinePath, "baseline", ".StackAudit.baseline.json", "Baseline file path")
 	rootCmd.PersistentFlags().BoolVar(&cfg.UpdateBaseline, "update-baseline", false, "Write a baseline file from the current scan")
 	rootCmd.PersistentFlags().StringSliceVar(&cfg.ModuleTimeouts, "module-timeout", nil, "Module timeout budget: duration for all modules or module=duration (e.g. 2s, env=500ms,secrets=5s)")
 	rootCmd.PersistentFlags().StringSliceVar(&cfg.PluginPaths, "plugin", nil, "Custom scanner plugin YAML path (repeatable)")

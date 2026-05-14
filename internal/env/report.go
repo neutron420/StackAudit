@@ -1,6 +1,6 @@
 package env
 
-import "devdoctor/internal/scanner"
+import "stackaudit/internal/scanner"
 
 type FileEnv struct {
 	Path       string

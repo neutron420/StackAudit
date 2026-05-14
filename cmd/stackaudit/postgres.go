@@ -5,27 +5,27 @@ import (
 	"fmt"
 	"os"
 
-	"devdoctor/internal/env"
-	"devdoctor/internal/output"
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/output"
+	"stackaudit/internal/postgres"
+	"stackaudit/internal/scanner"
 
 	"github.com/spf13/cobra"
 )
 
-var envCmd = &cobra.Command{
-	Use:   "env",
-	Short: "Scan environment files",
+var postgresCmd = &cobra.Command{
+	Use:     "postgres",
+	Aliases: []string{"postgresql"},
+	Short:   "Scan PostgreSQL configuration",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runEnvScan(cmd.Context())
+		return runPostgresScan(cmd.Context())
 	},
 }
 
-func runEnvScan(ctx context.Context) error {
+func runPostgresScan(ctx context.Context) error {
 	mode, err := output.ParseMode(cfg.OutputMode)
 	if err != nil {
 		return err
 	}
-
 	ruleSet, err := loadRules()
 	if err != nil {
 		return err
@@ -35,25 +35,18 @@ func runEnvScan(ctx context.Context) error {
 		return err
 	}
 
-	modules := []scanner.Module{env.NewScanner()}
-	report, err := scanner.Run(ctx, cfg.RootPath, ruleSet, modules, options)
+	report, err := scanner.Run(ctx, cfg.RootPath, ruleSet, []scanner.Module{postgres.NewScanner()}, options)
 	if err != nil {
 		return err
 	}
-
 	report, err = applyBaseline(report)
 	if err != nil {
 		return err
 	}
-
 	formatted, err := output.Render(report, mode)
 	if err != nil {
 		return err
 	}
-
 	fmt.Fprintln(os.Stdout, formatted)
-	if err := applyExitCode(report); err != nil {
-		return err
-	}
-	return nil
+	return applyExitCode(report)
 }

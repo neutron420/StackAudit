@@ -3,7 +3,7 @@ package output
 import (
 	"fmt"
 
-	"devdoctor/internal/scanner"
+	"stackaudit/internal/scanner"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
