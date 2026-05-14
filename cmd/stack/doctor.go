@@ -56,7 +56,7 @@ var doctorCmd = &cobra.Command{
 		}
 		results = append(results, configRes)
 
-		fmt.Print(output.RenderDoctor(results))
+		fmt.Fprint(cmd.OutOrStdout(), output.RenderDoctor(results))
 		return nil
 	},
 }
