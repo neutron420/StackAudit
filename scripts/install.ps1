@@ -18,9 +18,17 @@ Expand-Archive -Path $dest -DestinationPath $binDir -Force
 Remove-Item $dest
 
 $path = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($path -notlike "*$binDir*") {
-    [Environment]::SetEnvironmentVariable("Path", "$path;$binDir", "User")
-    Write-Host "Added $binDir to PATH. Please restart your terminal." -ForegroundColor Green
+
+$segments = @()
+if ($path) {
+    $segments = $path -split ';' | Where-Object { $_ -and $_.Trim() -ne '' }
 }
+
+# Ensure the new release path is first so it wins over older stack.exe copies
+$segments = @($binDir) + ($segments | Where-Object { $_ -ne $binDir })
+
+[Environment]::SetEnvironmentVariable("Path", ($segments -join ';'), "User")
+
+Write-Host "$binDir is now first in PATH. Please restart your terminal." -ForegroundColor Green
 
 Write-Host "stack installed successfully! Type 'stack' to begin." -ForegroundColor Green
