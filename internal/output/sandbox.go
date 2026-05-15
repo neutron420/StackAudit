@@ -1,6 +1,7 @@
 package output
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -25,14 +26,98 @@ type sandboxModel struct {
 }
 
 func RunSandbox(execute func([]string) string) error {
+	disableQuickEdit()
+	if usePlainWorkbench() {
+		disableMouseReporting()
+		enablePlainOutput()
+		return runPlainSandbox(execute)
+	}
 	m := sandboxModel{
 		execute: execute,
 		stats:   "Initializing system diagnostics...",
 	}
 
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	options := []tea.ProgramOption{}
+	if useAltScreen() {
+		options = append(options, tea.WithAltScreen())
+	}
+
+	p := tea.NewProgram(m, options...)
 	_, err := p.Run()
 	return err
+}
+
+func runPlainSandbox(execute func([]string) string) error {
+	disableMouseReporting()
+	reader := bufio.NewReader(os.Stdin)
+	var output strings.Builder
+
+	fmt.Fprintln(os.Stdout, "STACK Workbench (plain mode). Type 'help' for commands.")
+	for {
+		fmt.Fprint(os.Stdout, "stack > ")
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+		input := strings.TrimSpace(line)
+		if input == "" {
+			continue
+		}
+
+		lower := strings.ToLower(input)
+		if lower == "exit" || lower == "quit" || lower == "q" {
+			return nil
+		}
+		if lower == "copy" {
+			_ = os.WriteFile("stack_output.txt", []byte(output.String()), 0644)
+			fmt.Fprintln(os.Stdout, "[SYSTEM] Output saved to stack_output.txt")
+			continue
+		}
+		if lower == "clear" || lower == "cls" {
+			clearScreen()
+			output.Reset()
+			continue
+		}
+
+		args := strings.Fields(input)
+		result := execute(args)
+		if result == "__CLEAR__" {
+			clearScreen()
+			output.Reset()
+			continue
+		}
+		if result != "" {
+			output.WriteString(result)
+			fmt.Fprint(os.Stdout, result)
+		}
+	}
+}
+
+func clearScreen() {
+	if usePlainWorkbench() {
+		// Clear screen + scrollback for a real wipe without gaps.
+		fmt.Fprint(os.Stdout, "\033[2J\033[3J\033[H")
+		return
+	}
+	if runtime.GOOS == "windows" {
+		if isVSCodeTerminal() {
+			// VS Code terminal supports ANSI; prefer it to avoid shell-specific clears.
+			fmt.Fprint(os.Stdout, "\033[H\033[2J")
+			return
+		}
+		if err := exec.Command("powershell", "-NoProfile", "-Command", "Clear-Host").Run(); err == nil {
+			return
+		}
+		_ = exec.Command("cmd", "/c", "cls").Run()
+		return
+	}
+
+	fmt.Fprint(os.Stdout, "\033[H\033[2J")
+}
+
+func disableMouseReporting() {
+	// Disable mouse tracking modes that can leak escape sequences into the terminal.
+	fmt.Fprint(os.Stdout, "\033[?1000l\033[?1002l\033[?1006l\033[?1015l")
 }
 
 func (m sandboxModel) Init() tea.Cmd {
@@ -43,6 +128,8 @@ func (m sandboxModel) Init() tea.Cmd {
 	m.textInput.Width = 60
 	m.textInput.Prompt = " stack > "
 	m.textInput.PromptStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9")).Bold(true)
+	m.textInput.TextStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#F8F8F2"))
+	m.textInput.PlaceholderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#6272A4"))
 
 	m.viewport = viewport.New(80, 20)
 	m.viewport.SetContent("Welcome to the STACK Workbench. Type a command to begin.\n\nAvailable: scan, scan <module>, ci, env, docker, secrets, redis, k8s, postgres\n           help, copy, clear, quit")
@@ -121,7 +208,7 @@ func (m sandboxModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.output.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("#6272A4")).Render(fmt.Sprintf("\n> %s\n", input)))
 				m.viewport.SetContent(m.output.String() + "\nRunning...")
 				m.viewport.GotoBottom()
-				
+
 				args := strings.Fields(input)
 				m.textInput.Reset()
 				return m, m.runCommand(args)
@@ -169,9 +256,17 @@ func (m sandboxModel) View() string {
 		"Ctrl+Up/Down Scroll  |  'copy' Export  |  'clear' Reset  |  Esc/q Quit\n" +
 			"         Modules: env, docker, secrets, redis, k8s, cicd, postgres")
 
+	promptLine := m.textInput.View()
+	if usePlainPrompt() {
+		promptLine = " stack > " + m.textInput.Value()
+		if m.textInput.Focused() {
+			promptLine += "_"
+		}
+	}
+
 	footer := lipgloss.JoinVertical(lipgloss.Left,
 		strings.Repeat("─", m.width),
-		m.textInput.View(),
+		promptLine,
 		lipgloss.PlaceHorizontal(m.width, lipgloss.Center, help),
 	)
 

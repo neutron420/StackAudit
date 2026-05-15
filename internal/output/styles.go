@@ -12,7 +12,34 @@ var (
 	styleBranding = lipgloss.NewStyle().Foreground(lipgloss.Color("#BD93F9")).Bold(true)
 )
 
+var plainOutput bool
+
+func enablePlainOutput() {
+	plainOutput = true
+	styleHeader = lipgloss.NewStyle()
+	styleCritical = lipgloss.NewStyle()
+	styleWarning = lipgloss.NewStyle()
+	styleInfo = lipgloss.NewStyle()
+	styleSuccess = lipgloss.NewStyle()
+	styleMuted = lipgloss.NewStyle()
+	styleBranding = lipgloss.NewStyle()
+}
+
 func severityIcon(severity string) string {
+	if plainOutput {
+		switch severity {
+		case "critical":
+			return "!"
+		case "warning":
+			return "*"
+		case "info":
+			return "i"
+		case "success":
+			return "ok"
+		default:
+			return "-"
+		}
+	}
 	switch severity {
 	case "critical":
 		return "󰀦"
