@@ -1,14 +1,21 @@
-#!/bin/bash
+#!/bin/sh
 REPO="neutron420/StackAudit"
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
 BIN_DIR="$HOME/.stack/bin"
 SHELL_RC=""
 
-if [ "$ARCH" == "x86_64" ]; then ARCH="amd64"; fi
-if [ "$ARCH" == "aarch64" ] || [ "$ARCH" == "arm64" ]; then ARCH="arm64"; fi
+case "$ARCH" in
+	x86_64) ARCH="amd64" ;;
+	aarch64|arm64) ARCH="arm64" ;;
+esac
 
 URL=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep "browser_download_url" | grep "${OS}" | grep "${ARCH}" | grep "tar.gz" | head -n 1 | cut -d '"' -f 4)
+
+if [ -z "$URL" ]; then
+	echo "Error: could not resolve a Linux/macOS release asset for ${OS}/${ARCH}." >&2
+	exit 1
+fi
 
 echo "Downloading stack from $URL..."
 mkdir -p "$BIN_DIR"
