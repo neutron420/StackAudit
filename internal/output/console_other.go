@@ -9,11 +9,11 @@ func useAltScreen() bool {
 }
 
 func usePlainPrompt() bool {
-	return false
+	return true
 }
 
 func usePlainWorkbench() bool {
-	return false
+	return true
 }
 
 func isVSCodeTerminal() bool {

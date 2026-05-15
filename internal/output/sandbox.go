@@ -80,6 +80,21 @@ func runPlainSandbox(execute func([]string) string) error {
 		}
 
 		args := strings.Fields(input)
+		if isScanCommand(args) {
+			result := runWithSpinner("Scanning", func() string {
+				return execute(args)
+			})
+			if result == "__CLEAR__" {
+				clearScreen()
+				output.Reset()
+				continue
+			}
+			if result != "" {
+				output.WriteString(result)
+				fmt.Fprint(os.Stdout, result)
+			}
+			continue
+		}
 		result := execute(args)
 		if result == "__CLEAR__" {
 			clearScreen()
@@ -91,6 +106,43 @@ func runPlainSandbox(execute func([]string) string) error {
 			fmt.Fprint(os.Stdout, result)
 		}
 	}
+}
+
+func isScanCommand(args []string) bool {
+	if len(args) == 0 {
+		return false
+	}
+	cmd := strings.ToLower(args[0])
+	if cmd == "scan" {
+		return true
+	}
+	return cmd == "env" || cmd == "docker" || cmd == "secrets" || cmd == "redis" || cmd == "k8s" || cmd == "kubernetes" || cmd == "cicd" || cmd == "postgres"
+}
+
+func runWithSpinner(label string, work func() string) string {
+	stop := make(chan struct{})
+
+	go func() {
+		frames := []string{"|", "/", "-", "\\"}
+		i := 0
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-stop:
+				fmt.Fprint(os.Stdout, "\r\033[K")
+				return
+			case <-ticker.C:
+				fmt.Fprintf(os.Stdout, "\r%s %s", label, frames[i%len(frames)])
+				i++
+			}
+		}
+	}()
+
+	result := work()
+	close(stop)
+	fmt.Fprint(os.Stdout, "\r\033[K")
+	return result
 }
 
 func clearScreen() {
