@@ -31,13 +31,8 @@ func usePlainPrompt() bool {
 }
 
 func usePlainWorkbench() bool {
-	if os.Getenv("STACK_PLAIN_WORKBENCH") == "1" {
-		return true
-	}
-	if isVSCodeTerminal() {
-		return true
-	}
-	return false
+	// Default to plain workbench on Windows to avoid CMD/ConHost rendering issues.
+	return true
 }
 
 func isVSCodeTerminal() bool {

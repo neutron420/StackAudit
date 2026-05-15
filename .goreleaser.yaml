@@ -17,7 +17,7 @@ builds:
       - "386"
     main: ./cmd/stack
     ldflags:
-      - -s -w -X stack/pkg/version.version={{.Version}} -X stack/pkg/version.commit={{.Commit}} -X stack/pkg/version.date={{.Date}} -X stack/pkg/version.builtBy=goreleaser
+      - -s -w -X stack/pkg/version.Version={{.Version}} -X stack/pkg/version.Commit={{.Commit}} -X stack/pkg/version.Date={{.Date}}
 
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
